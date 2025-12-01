@@ -2,7 +2,7 @@
 
 **Full National Analysis | 14,752 Certified Facilities | 96.1% Predictive Accuracy**
 
-[![Open in Streamlit]([[https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://medicare-ultimate-dashboard.streamlit.app](https://medicare-hospital-spending-sucuav38kbxzgfurksyifm.streamlit.app/)](https://medicare-hospital-spending-sucuav38kbxzgfurksyifm.streamlit.app/))  
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)]([https://medicare-ultimate-dashboard.streamlit.app](https://medicare-hospital-spending-sucuav38kbxzgfurksyifm.streamlit.app/))  
 [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/RABIUL-ALAM-RATUL/Medicare-Hospital-Spending-by-Claim-USA-/blob/main/Final_Draft_26_11_25.ipynb)
 
 ### Live Interactive Dashboard (click above)
