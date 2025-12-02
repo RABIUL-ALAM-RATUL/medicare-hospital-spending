@@ -126,4 +126,4 @@ with col2:
     st.metric("SHAP Impact", "+0.42")
 
 features = ['Ownership_Risk_Score','State_Quality_Percentile','Chronic_Deficiency_Score',
-            'Fine_Per_Bed','Understaff
+            'Fine_Per_Bed','Understaff'
