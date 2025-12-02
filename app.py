@@ -180,10 +180,6 @@ st.success("""
 3. **Tie Medicare reimbursement directly to star rating** — not bed occupancy
 """)
 
-st.markdown("**Your analysis does not describe a problem.**  
-**It proves one — with unbreakable data.**  
-**Impact: Real**")
-
 # ====================== FOOTER ======================
 st.markdown("---")
 st.markdown(
