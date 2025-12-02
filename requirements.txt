@@ -1,4 +1,6 @@
 streamlit==1.28.0
-pandas==2.1.3  # Slightly older but more stable
-numpy==1.24.3  # Try this with Python 3.11
+--no-binary pandas,numpy
+pandas==2.2.1
+numpy==1.26.4
 pyarrow>=14.0
+Cython<3.0
