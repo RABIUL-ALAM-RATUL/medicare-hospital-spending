@@ -1,4 +1,3 @@
-# Import necessary libraries
 import streamlit as st  # For creating web application interface
 import pandas as pd  # For data manipulation and analysis
 import numpy as np  # For numerical operations and random data generation
@@ -225,7 +224,7 @@ with tab1:
         })
         
         # Create choropleth map of US states
-        fig = px.choropleth(
+        fig_map = px.choropleth(
             state_stats,
             locations='State',  # State abbreviations
             locationmode='USA-states',  # US state mode
@@ -235,13 +234,13 @@ with tab1:
             title='Average Medicare Spending per Patient by State',
             hover_data=['Hospital_Count', 'Total_Spending']  # Additional hover info
         )
-        fig.update_layout(height=500)  # Set map height
-        st.plotly_chart(fig, use_container_width=True)  # Display map
+        fig_map.update_layout(height=500)  # Set map height
+        st.plotly_chart(fig_map, width='stretch')  # Display map with updated width parameter
     
     with col2:
         # Get top 10 states by average spending
         top_states = state_stats.nlargest(10, 'Avg_Spend_per_Patient')
-        fig2 = px.bar(
+        fig_bar = px.bar(
             top_states,
             x='State',
             y='Avg_Spend_per_Patient',
@@ -250,14 +249,14 @@ with tab1:
             labels={'Avg_Spend_per_Patient': 'Average Spending ($)'},
             color_continuous_scale='Viridis'  # Color scale
         )
-        fig2.update_layout(height=500)
-        st.plotly_chart(fig2, use_container_width=True)
+        fig_bar.update_layout(height=500)
+        st.plotly_chart(fig_bar, width='stretch')  # Updated width parameter
         
         # Display state summary table
         st.markdown("##### State Summary")
         st.dataframe(
             state_stats.sort_values('Avg_Spend_per_Patient', ascending=False),  # Sort high to low
-            use_container_width=True,  # Use full width
+            width='stretch',  # Updated width parameter
             hide_index=True  # Don't show row numbers
         )
 
@@ -269,7 +268,7 @@ with tab2:
     
     with col1:
         # Histogram of spending distribution
-        fig1 = px.histogram(
+        fig_hist = px.histogram(
             filtered_df,
             x='Avg_Spending_per_Patient',
             nbins=30,  # Number of bins for histogram
@@ -278,17 +277,17 @@ with tab2:
             color_discrete_sequence=['#636EFA']  # Blue color
         )
         # Add vertical line for mean spending
-        fig1.add_vline(
+        fig_hist.add_vline(
             x=filtered_df['Avg_Spending_per_Patient'].mean(),
             line_dash="dash",  # Dashed line
             line_color="red",
             annotation_text=f"Mean: ${filtered_df['Avg_Spending_per_Patient'].mean():,.0f}"  # Annotation text
         )
-        fig1.update_layout(height=400)
-        st.plotly_chart(fig1, use_container_width=True)
+        fig_hist.update_layout(height=400)
+        st.plotly_chart(fig_hist, width='stretch')  # Updated width parameter
         
         # Scatter plot: Cost vs Quality
-        fig3 = px.scatter(
+        fig_scatter1 = px.scatter(
             filtered_df,
             x='Avg_Spending_per_Patient',
             y='Quality_Score',
@@ -301,8 +300,8 @@ with tab2:
                 'Quality_Score': 'Quality Score (1-5)'
             }
         )
-        fig3.update_layout(height=400)
-        st.plotly_chart(fig3, use_container_width=True)
+        fig_scatter1.update_layout(height=400)
+        st.plotly_chart(fig_scatter1, width='stretch')  # Updated width parameter
     
     with col2:
         # Aggregate data by hospital type
@@ -314,7 +313,7 @@ with tab2:
         type_stats = type_stats.rename(columns={'Facility_ID': 'Count'})
         
         # Bar chart: Spending by hospital type
-        fig2 = px.bar(
+        fig_bar2 = px.bar(
             type_stats,
             x='Hospital_Type',
             y='Avg_Spending_per_Patient',
@@ -326,20 +325,20 @@ with tab2:
             },
             text='Avg_Spending_per_Patient'  # Show values on bars
         )
-        fig2.update_traces(texttemplate='$%{text:,.0f}', textposition='outside')  # Format text
-        fig2.update_layout(height=400)
-        st.plotly_chart(fig2, use_container_width=True)
+        fig_bar2.update_traces(texttemplate='$%{text:,.0f}', textposition='outside')  # Format text
+        fig_bar2.update_layout(height=400)
+        st.plotly_chart(fig_bar2, width='stretch')  # Updated width parameter
         
         # Box plot: Cost efficiency by hospital type
-        fig4 = px.box(
+        fig_box = px.box(
             filtered_df,
             y='Cost_Efficiency_Score',
             x='Hospital_Type',
             title='Cost Efficiency Score by Hospital Type',
             labels={'Cost_Efficiency_Score': 'Cost Efficiency Score'}
         )
-        fig4.update_layout(height=400)
-        st.plotly_chart(fig4, use_container_width=True)
+        fig_box.update_layout(height=400)
+        st.plotly_chart(fig_box, width='stretch')  # Updated width parameter
 
 # TAB 3: Quality Metrics
 with tab3:
@@ -349,7 +348,7 @@ with tab3:
     
     with col1:
         # Scatter plot: Spending vs Readmission rate
-        fig1 = px.scatter(
+        fig_scatter2 = px.scatter(
             filtered_df,
             x='Avg_Spending_per_Patient',
             y='Readmission_Rate',
@@ -363,8 +362,8 @@ with tab3:
                 'Mortality_Rate': 'Mortality Rate (%)'
             }
         )
-        fig1.update_layout(height=500)
-        st.plotly_chart(fig1, use_container_width=True)
+        fig_scatter2.update_layout(height=500)
+        st.plotly_chart(fig_scatter2, width='stretch')  # Updated width parameter
         
         # Create correlation matrix
         numeric_cols = ['Avg_Spending_per_Patient', 'Readmission_Rate', 
@@ -372,19 +371,19 @@ with tab3:
         corr_matrix = filtered_df[numeric_cols].corr().round(2)  # Calculate correlations
         
         # Heatmap of correlation matrix
-        fig3 = px.imshow(
+        fig_heatmap = px.imshow(
             corr_matrix,
             text_auto=True,  # Show values in cells
             aspect='auto',  # Automatic aspect ratio
             color_continuous_scale='RdBu',  # Red-Blue color scale
             title='Correlation Matrix'
         )
-        fig3.update_layout(height=400)
-        st.plotly_chart(fig3, use_container_width=True)
+        fig_heatmap.update_layout(height=400)
+        st.plotly_chart(fig_heatmap, width='stretch')  # Updated width parameter
     
     with col2:
         # Violin plot: Patient satisfaction by hospital type
-        fig2 = px.violin(
+        fig_violin = px.violin(
             filtered_df,
             y='Patient_Satisfaction',
             x='Hospital_Type',
@@ -393,8 +392,8 @@ with tab3:
             title='Patient Satisfaction by Hospital Type',
             labels={'Patient_Satisfaction': 'Patient Satisfaction Score (%)'}
         )
-        fig2.update_layout(height=500)
-        st.plotly_chart(fig2, use_container_width=True)
+        fig_violin.update_layout(height=500)
+        st.plotly_chart(fig_violin, width='stretch')  # Updated width parameter
         
         # Display summary statistics for quality metrics
         st.markdown("##### Quality Metrics Summary")
@@ -404,7 +403,7 @@ with tab3:
             'Patient_Satisfaction': ['mean', 'min', 'max'],
             'Quality_Score': ['mean', 'min', 'max']
         }).round(2)
-        st.dataframe(quality_summary, use_container_width=True)
+        st.dataframe(quality_summary, width='stretch')  # Updated width parameter
 
 # TAB 4: Benchmarking
 with tab4:
@@ -425,7 +424,7 @@ with tab4:
                                                                  'Hospital_Type', 'Value_Ratio',
                                                                  'Quality_Score', 'Avg_Spending_per_Patient']]
         st.markdown("##### Top 10 Hospitals (Best Value)")
-        st.dataframe(top_hospitals, use_container_width=True, hide_index=True)
+        st.dataframe(top_hospitals, width='stretch', hide_index=True)  # Updated width parameter
     
     with col2:
         # Bottom 10 hospitals by value ratio
@@ -433,7 +432,7 @@ with tab4:
                                                                      'Hospital_Type', 'Value_Ratio',
                                                                      'Quality_Score', 'Avg_Spending_per_Patient']]
         st.markdown("##### Bottom 10 Hospitals (Worst Value)")
-        st.dataframe(bottom_hospitals, use_container_width=True, hide_index=True)
+        st.dataframe(bottom_hospitals, width='stretch', hide_index=True)  # Updated width parameter
     
     # Benchmarking analysis section
     st.markdown("#### 📊 Benchmarking Analysis")
@@ -485,13 +484,13 @@ with tab4:
         
         # Display comparison table
         st.markdown(f"##### Benchmarking: {selected_benchmark}")
-        st.dataframe(comparison_df, use_container_width=True, hide_index=True)
+        st.dataframe(comparison_df, width='stretch', hide_index=True)  # Updated width parameter
         
         # Create bar chart comparing selected hospital to average
-        fig = go.Figure()
+        fig_benchmark = go.Figure()
         
         # Bar for selected hospital
-        fig.add_trace(go.Bar(
+        fig_benchmark.add_trace(go.Bar(
             name='Selected Hospital',
             x=comparison_df['Metric'],
             y=comparison_df['Hospital Value'],
@@ -499,7 +498,7 @@ with tab4:
         ))
         
         # Bar for average values
-        fig.add_trace(go.Bar(
+        fig_benchmark.add_trace(go.Bar(
             name='Average',
             x=comparison_df['Metric'],
             y=comparison_df['Average'],
@@ -507,14 +506,14 @@ with tab4:
         ))
         
         # Update chart layout
-        fig.update_layout(
+        fig_benchmark.update_layout(
             title=f'{selected_benchmark} vs Average Comparison',
             barmode='group',  # Grouped bars
             height=400,
             xaxis_tickangle=-45  # Rotate x-axis labels
         )
         
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig_benchmark, width='stretch')  # Updated width parameter
 
 # TAB 5: Raw Data
 with tab5:
@@ -554,7 +553,7 @@ with tab5:
     # Display the data table
     st.dataframe(
         display_df,
-        use_container_width=True,  # Use full width
+        width='stretch',  # Updated width parameter
         height=600  # Set table height
     )
     
@@ -562,7 +561,7 @@ with tab5:
     st.markdown("##### Data Statistics")
     st.dataframe(
         filtered_df.describe().round(2),  # Basic statistics
-        use_container_width=True
+        width='stretch'  # Updated width parameter
     )
 
 # Footer section
