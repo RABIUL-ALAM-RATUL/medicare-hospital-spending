@@ -1,8 +1,3 @@
-"""
-Streamlit App for Medicare Hospital Spending Analysis
-This app converts the Jupyter notebook analysis to an interactive web application
-"""
-
 # ============================================================================
 # IMPORT LIBRARIES
 # ============================================================================
