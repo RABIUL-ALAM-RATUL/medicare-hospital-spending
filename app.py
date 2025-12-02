@@ -4,7 +4,7 @@ import plotly.express as px
 
 # 1. Page Configuration
 st.set_page_config(
-    page_title="Medicare Nursing Home Complete Analysis",
+    page_title="Medicare Hospital Spending by Claim (USA)",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
@@ -20,7 +20,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # 3. Title Section
-st.title("Medicare Hospital Spending & Nursing Home Quality – Full National Analysis")
+st.title("Medicare Hospital Spending by Claim (USA)")
 st.markdown("### **United States • CMS 2025 Data • 14,752 Certified Facilities**")
 st.markdown("---")
 
