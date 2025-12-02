@@ -1,6 +1,7 @@
 # app.py — Complete Medicare Nursing Home Dashboard (100% Offline, All Figures)
 import streamlit as st
 import pandas as pd
+import numpy as np  # Added import for numpy
 import plotly.express as px
 import plotly.graph_objects as go
 import warnings
@@ -89,7 +90,7 @@ st.plotly_chart(fig_fines, use_container_width=True)
 # Box plot: Ownership vs Rating
 box_df = pd.DataFrame({
     "Ownership": ["For-Profit"]*8000 + ["Non-Profit"]*1800 + ["Government"]*300,
-    "Star Rating": list(pd.np.random.choice([1,2], size=8000)) + list(pd.np.random.choice([4,5], size=1800)) + list(pd.np.random.choice([3,4,5], size=300))
+    "Star Rating": list(np.random.choice([1,2], size=8000)) + list(np.random.choice([4,5], size=1800)) + list(np.random.choice([3,4,5], size=300))
 })
 fig_box = px.box(box_df, x="Ownership", y="Star Rating", color="Ownership",
                  title="Star Rating Distribution by Ownership Type")
@@ -102,52 +103,4 @@ failing = pd.DataFrame({"State": ["TX","CA","IL","OH","PA","MO","FL","NY","NC","
 fig4 = px.bar(failing, x="State", y="Failing Homes", text="Failing Homes",
               color="Failing Homes", color_continuous_scale="Reds",
               title="Top 10 States with Most 1–2 Star Homes (2025)")
-fig4.update_traces and fig4.update_traces(textposition="outside")
-st.plotly_chart(fig4, use_container_width=True)
-
-# ====================== TOP 20 BEST & WORST (hardcoded) ======================
-st.header("**Top 20 Best & Worst Nursing Homes**")
-best_worst = pd.DataFrame({
-    "Rank": list(range(1,11)) + list(range(1,11)),
-    "Facility": ["Golden Living Center", "Sunrise Senior Living", "Brookdale", "Atria", "Five Star", "Genesis", "ManorCare", "HCR", "SavaSeniorCare", "Consulate"]*2,
-    "State": ["NY","MA","CT","NJ","CA","TX","FL","IL","OH","PA"]*2,
-    "Star Rating": [5,5,5,5,5,1,1,1,1,1]*2,
-    "Type": ["Best"]*10 + ["Worst"]*10
-})
-st.dataframe(best_worst.style.background_gradient(cmap="RdYlGn", subset=["Star Rating"]), use_container_width=True)
-
-# ====================== SHAP VALUES ======================
-st.header("**Why Homes Fail – SHAP Explanation**")
-shap = pd.DataFrame({
-    "Feature": ["Ownership Type","Staffing Rating","Health Inspection","QM Rating","Weighted Score","Number of Fines"],
-    "SHAP Value": [0.42, 0.31, 0.28, 0.19, 0.15, 0.11]
-})
-fig_shap = px.bar(shap, x="SHAP Value", y="Feature", orientation="h",
-                  color="SHAP Value", color_continuous_scale="plasma",
-                  title="SHAP Feature Importance (Random Forest Model)")
-fig_shap.update_layout(yaxis={"categoryorder": "total ascending"})
-st.plotly_chart(fig_shap, use_container_width=True)
-
-# ====================== ACT 5: CALL TO ACTION ======================
-st.header("**Act 5: The Call to Action**")
-st.markdown("""
-<blockquote>
-<h2>This is not a market.<br>This is a moral failure.</h2>
-</blockquote>
-""", unsafe_allow_html=True)
-
-st.success("""
-### Three Immediate Policy Levers
-1. **Ban new for-profit nursing homes** in states >80% privatized  
-2. **Mandate minimum staffing ratios** – understaffing = +42% failure risk  
-3. **Tie Medicare payments to star rating**, not bed count
-""")
-
-st.markdown("**Your dissertation does not describe a problem.**  \n**It proves one — with unbreakable data.**")
-
-# ====================== FOOTER ======================
-st.markdown("---")
-st.markdown("<p style='text-align: center; color: gray;'>"
-            "100% offline • Exact replica of Final_Draft_26_11_25.ipynb • RABIUL ALAM RATUL • "
-            "<a href='https://github.com/RABIUL-ALAM-RATUL/medicare-hospital-spending'>GitHub</a>"
-            "</p>", unsafe_allow_html=True)
+fig
