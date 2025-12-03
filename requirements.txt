@@ -7,3 +7,4 @@ missingno
 shap
 scikit-learn
 pyarrow
+statsmodels
