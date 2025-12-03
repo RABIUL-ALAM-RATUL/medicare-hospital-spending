@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt  # Import Matplotlib for static plotting (needed
 import numpy as np      # Import NumPy for numerical operations
 import missingno as msno # Import Missingno library to visualize missing data patterns
 from sklearn.preprocessing import StandardScaler, MinMaxScaler # Import scalers for data transformation
+import time # For simulation effects
 
 # Attempt to import ML libraries for the "Exact Figure" requirement
 try:
@@ -38,10 +39,10 @@ st.set_page_config(
 st.markdown("""
     <style>
     /* Adjust main container padding to remove excess white space */
-    .main .block-container {padding-top: 1.5rem; padding-bottom: 3rem;}
+    .main .block-container {padding-top: 1rem; padding-bottom: 3rem;}
     
     /* Set global font family for headings */
-    h1, h2, h3 {font-family: 'Segoe UI', sans-serif;}
+    h1, h2, h3 {font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;}
     
     /* Style Metric Cards with "Glassmorphism" effect for Dark/Light mode compatibility */
     div[data-testid="stMetric"] {
@@ -49,19 +50,23 @@ st.markdown("""
         border: 1px solid rgba(28, 131, 225, 0.3); /* Thin blue border */
         padding: 15px;                             /* Internal spacing */
         border-radius: 10px;                       /* Rounded corners */
-        color: rgb(38, 39, 48);                    /* Text color */
+        overflow-wrap: break-word;
     }
     
-    /* Add top padding to sidebar for better alignment */
+    /* Sidebar Styling */
     section[data-testid="stSidebar"] {
-        padding-top: 2rem;
+        background-color: #f8f9fa; /* Light grey background for sidebar in light mode */
+    }
+    @media (prefers-color-scheme: dark) {
+        section[data-testid="stSidebar"] {
+            background-color: #1e1e1e; /* Dark background for sidebar in dark mode */
+        }
     }
     
-    /* Style chart containers to stand out slightly */
-    .stPlotlyChart {
-        background-color: rgba(255, 255, 255, 0.05); /* Very faint background */
-        border-radius: 10px;                         /* Rounded corners */
-        padding: 10px;                               /* Spacing */
+    /* Download Button Styling */
+    .stDownloadButton button {
+        width: 100%;
+        border-radius: 5px;
     }
     </style>
 """, unsafe_allow_html=True) # allow_unsafe_html=True is required to inject CSS
@@ -105,6 +110,7 @@ df = load_data()
 # Safety Check: If dataframe is empty, stop the app and show an error
 if df.empty:
     st.error("🚨 **CRITICAL ERROR**: Data file `df_final.parquet` not found locally or on GitHub.")
+    st.info("Please ensure you have run the notebook to generate the parquet file.")
     st.stop() # Halts execution here
 
 # Helper function to find columns flexibly (case-insensitive search)
@@ -127,11 +133,13 @@ city_col = get_col(['City']) # Find city column
 # 4. SIDEBAR NAVIGATION
 # ——————————————————————————————————————————————————————————————————————————————
 with st.sidebar: # Context manager for the sidebar
-    st.title("Medicare Hospital Spending by Claim (USA)") # Sidebar Title (Project Name)
+    st.markdown("### 🏥 Medicare Analytics")
+    st.caption(f"v1.0.0 | CMS 2025 Data")
+    
     st.markdown("---") # Horizontal line
     
     # Radio buttons to switch between different dashboard pages
-    selected_page = st.radio("Go to Module:", [
+    selected_page = st.radio("MAIN MENU", [
         "1. Executive Dashboard",
         "2. Data Pipeline & Quality",
         "3. Interactive EDA Lab",
@@ -141,23 +149,35 @@ with st.sidebar: # Context manager for the sidebar
     ])
     
     st.markdown("---") # Horizontal line
-    # Display dataset information in an info box
-    st.info(f"**Data Loaded:**\n{len(df):,} Facilities\nCMS 2025 Release")
     
-    # Global Filters section (Only shows up for specific pages)
-    if selected_page in ["3. Interactive EDA Lab"]:
-        st.markdown("### 🛠️ Global Settings")
-        # Allow user to pick a plot theme (e.g., dark mode vs light mode charts)
-        global_theme = st.selectbox("Color Theme", ["plotly", "plotly_dark", "ggplot2", "seaborn"], index=0)
-    else:
-        global_theme = "plotly" # Default theme
+    # EXPORT CENTER
+    st.markdown("### 📥 Export Center")
+    with st.expander("Download Datasets"):
+        st.write("Get the raw data for external tools (Tableau, PowerBI).")
+        csv = df.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label="📄 Download as CSV",
+            data=csv,
+            file_name='medicare_hospital_spending_2025.csv',
+            mime='text/csv',
+        )
+    
+    with st.expander("Download Figures"):
+        st.info("Hover over any chart and click the 📷 (Camera) icon to download as PNG/SVG.")
+        st.markdown("**For PDF Reports:**")
+        st.caption("Use your browser's 'Print to PDF' feature (Ctrl+P) to save this dashboard as a PDF report.")
+
+    st.markdown("---")
+    st.markdown("**Created by:**")
+    st.markdown("Md Rabiul Alam")
+    st.caption("2025 Analysis Project")
 
 # ——————————————————————————————————————————————————————————————————————————————
 # PAGE 1: EXECUTIVE DASHBOARD
 # ——————————————————————————————————————————————————————————————————————————————
 if selected_page == "1. Executive Dashboard":
     st.title("🏥 National Quality & Privatization Monitor") # Page Title
-    st.markdown("High-level overview of the US nursing home landscape.") # Subtitle
+    st.markdown("**Project:** Medicare Hospital Spending by Claim (USA)") # Subtitle
     
     # Create 4 columns for KPI cards
     k1, k2, k3, k4 = st.columns(4)
@@ -184,27 +204,33 @@ if selected_page == "1. Executive Dashboard":
     map_mode = st.radio("Select View Layer:", ["Privatization Heatmap", "Quality Heatmap"], horizontal=True)
     
     if map_mode == "Privatization Heatmap":
-        # Prepare data for Privatization Map
-        map_data = (df[df['Ownership_Risk_Score'] == 3].groupby('code').size() / df.groupby('code').size() * 100).reset_index(name='Val')
+        # Prepare data for Privatization Map using ROBUST calculation (fixes white map issue)
+        # We group by code and check mean of boolean, then fillna(0) to ensure states with 0% don't disappear
+        map_data = df.groupby('code')['Ownership_Risk_Score'].apply(lambda x: (x == 3).mean() * 100).reset_index(name='Val')
+        map_data['Val'] = map_data['Val'].fillna(0)
+        
         title = "Percentage of For-Profit Facilities by State"
         color_scale = "Reds" # Red scale for 'bad'
         range_c = (0, 100) # Fixed range 0-100%
+        label = "% For-Profit"
     else:
         # Prepare data for Quality Map
         map_data = df.groupby('code')[rating_col].mean().reset_index(name='Val')
         title = "Average CMS Star Rating by State"
         color_scale = "RdYlGn" # Red-Yellow-Green scale
         range_c = (1, 5) # Fixed range 1-5 stars
+        label = "Avg Rating"
 
     # Generate Choropleth Map using Plotly Express
     fig_map = px.choropleth(
         map_data, locations='code', locationmode='USA-states',
         color='Val', scope="usa", color_continuous_scale=color_scale,
         range_color=range_c,
-        title=title, hover_data={'code':True, 'Val':':.1f'}
+        title=title, hover_data={'code':True, 'Val':':.1f'},
+        labels={'Val': label}
     )
-    # Adjust map layout margins
-    fig_map.update_layout(margin={"r":0,"t":40,"l":0,"b":0}, height=550)
+    # Adjust map layout margins and layout
+    fig_map.update_layout(margin={"r":0,"t":40,"l":0,"b":0}, height=550, geo=dict(bgcolor='rgba(0,0,0,0)'))
     st.plotly_chart(fig_map, use_container_width=True) # Display map
 
 # ——————————————————————————————————————————————————————————————————————————————
@@ -222,7 +248,8 @@ elif selected_page == "2. Data Pipeline & Quality":
         # Dropdown to choose chart type
         viz_type = st.selectbox("Select Visualization Style", ["Matrix (Density)", "Heatmap (Correlation)", "Bar (Counts)"])
         
-        # Logic: If data is clean, simulate missing data so the charts aren't empty (for demo)
+        # Logic: If data is clean, simulate missing data so the charts aren't empty (for demo purpose only)
+        # This prevents "Empty Chart" errors if you are viewing the final cleaned dataset
         df_viz = df.sample(500).copy()
         if df.isnull().sum().sum() == 0:
             # Inject fewer columns for cleaner visualization (Avoids text overlap)
@@ -240,12 +267,16 @@ elif selected_page == "2. Data Pipeline & Quality":
         if "Matrix" in viz_type:
             msno.matrix(df_viz_final, ax=ax, sparkline=False, color=(0.0, 0.65, 0.9), fontsize=10) # Cyan blue matrix
         elif "Heatmap" in viz_type:
-            msno.heatmap(df_viz_final, ax=ax, cmap='RdBu', fontsize=10) # Red-Blue heatmap
+            # Check for ambiguity error before plotting heatmap
+            if not df_viz_final.empty and df_viz_final.shape[1] > 1:
+                msno.heatmap(df_viz_final, ax=ax, cmap='RdBu', fontsize=10) # Red-Blue heatmap
+            else:
+                st.info("Not enough data correlation to display heatmap.")
         else:
             msno.bar(df_viz_final, ax=ax, color=(0.2, 0.8, 0.6), fontsize=10) # Teal green bar
             
         st.pyplot(fig) # Render the matplotlib figure
-        st.caption("Showing subset of columns with missing values to ensure readability.")
+        st.caption("Visualizing nullity patterns on sample data.")
 
     # TAB 2: OUTLIER DETECTION
     with tabs[1]:
@@ -379,7 +410,7 @@ elif selected_page == "4. Predictive Intelligence":
             model.fit(X_train, y_train)
             return model, X_test, features
 
-        with st.spinner("Training Random Forest Model & Calculating SHAP values..."):
+        with st.spinner("Training Random Forest Model & Calculating SHAP values... (One-time setup)"):
             model, X_test, feature_names = train_rf_model(df)
             
             # 1. Feature Importance (SHAP Bar)
@@ -411,11 +442,10 @@ elif selected_page == "4. Predictive Intelligence":
             st.subheader("2. Forensic Analysis: Anatomy of a Failure")
             st.markdown("Breakdown of why a specific high-risk facility was flagged.")
             
-            # Calculate base value
-            expected_value = explainer.expected_value[1] if isinstance(explainer.expected_value, list) else explainer.expected_value
             # Pick a real high-risk example
             example_idx = 0 
             shap_val_single = shap_values[1][example_idx] if isinstance(shap_values, list) else shap_values[example_idx]
+            base_value = explainer.expected_value[1] if isinstance(explainer.expected_value, list) else explainer.expected_value
             
             fig_water = go.Figure(go.Waterfall(
                 orientation = "v",
@@ -493,15 +523,15 @@ elif selected_page == "6. Local Market Explorer":
     # 2. Filters Row
     c1, c2, c3 = st.columns([1, 1, 2])
     with c1:
-        # Dropdown for State (Optional)
+        # Dropdown for State (Optional) - Default to "All"
         unique_states = ["All"] + sorted(df['State'].unique().tolist())
         state = st.selectbox("Filter by State", unique_states)
     with c2:
-        # Dropdown for City (Dependent on State or All)
+        # Dropdown for City (Dependent on State or All) - Default to "All"
         if state != "All":
             unique_cities = ["All"] + sorted(df[df['State'] == state][city_col].unique().tolist())
         else:
-            # If no state selected, just show "All" or restrict to save performance, but user asked for "All available"
+            # If no state selected, restrict to save performance if list is huge, but user requested all
             unique_cities = ["All"] + sorted(df[city_col].unique().tolist())
         city = st.selectbox("Filter by City", unique_cities)
         
@@ -521,6 +551,7 @@ elif selected_page == "6. Local Market Explorer":
         
     st.markdown("---")
     
+    # Display logic: If rows exist, show them. Defaults to showing ALL rows if no filter applied (as requested)
     if not filtered_df.empty:
         # Local Metrics Calculation
         m1, m2, m3 = st.columns(3)
