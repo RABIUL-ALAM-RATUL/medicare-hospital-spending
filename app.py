@@ -175,8 +175,8 @@ with st.sidebar:
         "2. Data Preprocessing",
         "3. Exploratory Data Analysis (EDA)",
         "4. Predictive Modelling",
-        "5. Narrative of the Analytics",
-        "6. Market & Facility Explorer"
+        "5. Market & Facility Explorer",
+        "6. Narrative of the Analytics"
     ])
     
     st.markdown("---") # Divider
@@ -471,7 +471,7 @@ elif page == "4. Predictive Modelling":
 
 # PAGE 5: MARKET EXPLORER (ADDED VALUE MODULE)
 
-elif page == "6. Market & Facility Explorer":
+elif page == "5. Market & Facility Explorer":
     st.title("📍 Market & Facility Explorer") # Page Title
     st.markdown("Compare a facility against State and National averages.")
     
@@ -549,7 +549,7 @@ elif page == "6. Market & Facility Explorer":
 
 # PAGE 6: NARRATIVE
 
-elif page == "5. Narrative of the Analytics":
+elif page == "6. Narrative of the Analytics":
     st.title("The Data Story: America's Nursing Home Crisis") # Page Title
     
     acts = st.tabs(["Act 1: Privatization", "Act 2: Collapse", "Act 3: Action"])
