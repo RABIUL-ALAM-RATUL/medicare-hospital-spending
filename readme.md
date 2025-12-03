@@ -20,7 +20,7 @@ Geospatial Analysis: Interactive choropleth maps visualising the spatial distrib
 
 Granular Market Exploration: A search engine permitting forensic analysis of individual facilities, comparing specific risk profiles, staffing ratios, and federal fines against state and national benchmarks.
 
-Causal Inference (SHAP): Integration of SHAP (Shapley Additive exPlanations) values to interpret the Random Forest model, quantifying the precise contribution of factors such as understaffing and ownership type to a facility's "Low Quality" classification.
+Causal Inference (SHAP): Integration of SHAP (SHapley Additive exPlanations) values to interpret the Random Forest model, quantifying the precise contribution of factors such as understaffing and ownership type to a facility's "Low Quality" classification.
 
 Data Extraction: Functionality to export filtered datasets or Tableau-optimised files for further independent research.
 
@@ -42,7 +42,7 @@ This repository contains the complete reproducible pipeline for the study:
 
 app.py: The production-ready source code for the Streamlit web application, including all visualisation logic and interactive components.
 
-Medicare Hospital Spending by Claim (USA).ipynb: The Jupyter Notebook documenting the end-to-end data science pipeline, including data cleaning (imputation/capping), Exploratory Data Analysis (EDA), Feature Engineering, and Machine Learning model training.
+Final_Draft_26_11_25.ipynb: The Jupyter Notebook documenting the end-to-end data science pipeline, including data cleaning (imputation/capping), Exploratory Data Analysis (EDA), Feature Engineering, and Machine Learning model training.
 
 df_final.parquet: The pre-processed, engineered, and compressed dataset utilised by the dashboard (generated via the notebook pipeline).
 
@@ -58,21 +58,25 @@ git clone [https://github.com/RABIUL-ALAM-RATUL/Medicare-Hospital-Spending-by-Cl
 cd Medicare-Hospital-Spending-by-Claim-USA-
 
 
+
 Environment Configuration
 
 pip install -r requirements.txt
+
 
 
 Execution
 
 To audit the analytical pipeline:
 
-Jupyter Notebook Medicare Hospital Spending by Claim (USA).ipynb
+jupyter notebook Medicare Hospital Spending by Claim (USA).ipynb
+
 
 
 To launch the interactive dashboard:
 
 streamlit run app.py
+
 
 
 Principal Investigator
