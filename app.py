@@ -29,7 +29,7 @@ except ImportError:
 # Configure the Streamlit page settings
 st.set_page_config(
     page_title="Medicare Hospital Spending by Claim (USA)", # Set the title displayed in the browser tab
-    page_icon=None, # Remove default icon (can be set to emoji if desired)
+    page_icon=None, # Remove default icon
     layout="wide",  # Use the full width of the screen for the layout
     initial_sidebar_state="expanded" # Keep the sidebar open by default when the app loads
 )
@@ -191,7 +191,7 @@ with st.sidebar:
     st.markdown("---") # Horizontal separator
     
     # Export Options Section
-    st.subheader("Export Options") # Subheader for exports
+    st.subheader("Export Data") # Subheader for exports
     st.write("Download data for external tools.") # Description
     
     # Generate CSV data string for download
@@ -213,6 +213,9 @@ with st.sidebar:
         mime="text/csv",
         help="Optimized CSV format ready for Tableau import." # Hover help text
     )
+    
+    st.markdown("### Export Figures")
+    st.info("Hover over any chart and click the Camera icon to download as Image/SVG for reports.")
 
 # ------------------------------------------------------------------------------
 # PAGE 1: EXECUTIVE DASHBOARD
@@ -257,7 +260,7 @@ if page == "Executive Dashboard":
             # Create Choropleth Map using Plotly Express
             fig = px.choropleth(grp, locations='code', locationmode='USA-states', color='Val',
                                 color_continuous_scale='Reds', range_color=(0,100), # Red scale, 0-100%
-                                title="For-Profit % by State")
+                                title="For-Profit % by State", scope="usa")
             st.plotly_chart(fig, use_container_width=True) # Display interactive map
             
     with col2:
@@ -268,7 +271,7 @@ if page == "Executive Dashboard":
             # Create Choropleth Map using Plotly Express
             fig = px.choropleth(grp, locations='code', locationmode='USA-states', color='Val',
                                 color_continuous_scale='RdYlGn', range_color=(1,5), # Red-Yellow-Green scale, 1-5 stars
-                                title="Avg Star Rating by State")
+                                title="Avg Star Rating by State", scope="usa")
             st.plotly_chart(fig, use_container_width=True) # Display interactive map
 
 # ------------------------------------------------------------------------------
@@ -331,7 +334,7 @@ elif page == "Interactive EDA Lab":
     c1, c2 = st.columns([1, 3])
     
     with c1:
-        st.markdown("#### ⚙️ Config") # Section Header
+        st.markdown("#### Chart Config") # Section Header
         chart = st.selectbox("Chart Type", ["Scatter", "Box", "Histogram"]) # Dropdown for chart type
         
         # Identify numeric and categorical columns
@@ -401,7 +404,11 @@ elif page == "Predictive Modelling":
             else:
                 vals = np.abs(shap_values).mean(0)
             
-            # FIX: Ensure feature names and values have same length before plotting
+            # FIX 1: Ensure vals is flattened to 1D array to avoid ValueError
+            if vals.ndim > 1:
+                vals = vals.flatten()
+
+            # FIX 2: Ensure feature names and values have same length before plotting
             min_len = min(len(feats), len(vals))
             feats = feats[:min_len]
             vals = vals[:min_len]
