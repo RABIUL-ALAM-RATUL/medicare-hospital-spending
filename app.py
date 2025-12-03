@@ -1,5 +1,5 @@
 # app.py -> ULTIMATE PROFESSIONAL DASHBOARD (Theme-Adaptive & Error-Free)
-# Created by: Md Rabiul Alam | Project: Medicare Hospital Spending by Claim (USA)
+# This file is the main entry point for the Streamlit application.
 
 # ------------------------------------------------------------------------------
 # 1. LIBRARY IMPORTS
@@ -29,7 +29,7 @@ except ImportError:
 # Configure the Streamlit page settings
 st.set_page_config(
     page_title="Medicare Hospital Spending by Claim (USA)", # Set the title displayed in the browser tab
-    page_icon=None, # Remove default icon
+    page_icon=None, # Remove default icon (can be set to emoji if desired)
     layout="wide",  # Use the full width of the screen for the layout
     initial_sidebar_state="expanded" # Keep the sidebar open by default when the app loads
 )
@@ -89,6 +89,15 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True) # allow_unsafe_html=True is required to render CSS
+
+# Define a central Color Palette dictionary for consistency across all charts
+CP = {
+    'primary': '#0078D4',    # Corporate Blue (Main brand color)
+    'secondary': '#D83B01',  # Alert Red/Orange (For bad/warning data)
+    'success': '#107C10',    # Success Green (For good data)
+    'neutral': '#605E5C',    # Neutral Grey (For neutral data)
+    'dark': '#201F1E'        # Dark Grey (For text/accents)
+}
 
 # ------------------------------------------------------------------------------
 # 3. HELPER DATA (State Mapping)
@@ -214,8 +223,8 @@ with st.sidebar:
         help="Optimized CSV format ready for Tableau import." # Hover help text
     )
     
-    st.markdown("### Export Figures")
-    st.info("Hover over any chart and click the Camera icon to download as Image/SVG for reports.")
+    st.markdown("### Export Figures") # Header for figure export info
+    st.info("Hover over any chart and click the Camera icon to download as Image/SVG for reports.") # Instruction box
 
 # ------------------------------------------------------------------------------
 # PAGE 1: EXECUTIVE DASHBOARD
@@ -260,7 +269,7 @@ if page == "Executive Dashboard":
             # Create Choropleth Map using Plotly Express
             fig = px.choropleth(grp, locations='code', locationmode='USA-states', color='Val',
                                 color_continuous_scale='Reds', range_color=(0,100), # Red scale, 0-100%
-                                title="For-Profit % by State", scope="usa")
+                                title="For-Profit % by State", scope="usa") # Limit scope to USA
             st.plotly_chart(fig, use_container_width=True) # Display interactive map
             
     with col2:
@@ -271,7 +280,7 @@ if page == "Executive Dashboard":
             # Create Choropleth Map using Plotly Express
             fig = px.choropleth(grp, locations='code', locationmode='USA-states', color='Val',
                                 color_continuous_scale='RdYlGn', range_color=(1,5), # Red-Yellow-Green scale, 1-5 stars
-                                title="Avg Star Rating by State", scope="usa")
+                                title="Avg Star Rating by State", scope="usa") # Limit scope to USA
             st.plotly_chart(fig, use_container_width=True) # Display interactive map
 
 # ------------------------------------------------------------------------------
@@ -406,12 +415,12 @@ elif page == "Predictive Modelling":
             
             # FIX 1: Ensure vals is flattened to 1D array to avoid ValueError
             if vals.ndim > 1:
-                vals = vals.flatten()
+                vals = vals.flatten() # Flatten array if it has multiple dimensions
 
             # FIX 2: Ensure feature names and values have same length before plotting
-            min_len = min(len(feats), len(vals))
-            feats = feats[:min_len]
-            vals = vals[:min_len]
+            min_len = min(len(feats), len(vals)) # Find the minimum length
+            feats = feats[:min_len] # Slice features
+            vals = vals[:min_len] # Slice values
                 
             # Create DataFrame for plotting
             imp_df = pd.DataFrame({'Feature': feats, 'Importance': vals}).sort_values('Importance')
@@ -458,7 +467,7 @@ elif page == "Data Narrative":
             # Recalculate map data specifically for this narrative
             grp = df.groupby('code')['Ownership_Risk_Score'].apply(lambda x: (x==3).mean()*100).reset_index(name='Val')
             fig = px.choropleth(grp, locations='code', locationmode='USA-states', color='Val',
-                                color_continuous_scale='Reds', scope="usa")
+                                color_continuous_scale='Reds', scope="usa") # Limit scope to USA
             st.plotly_chart(fig, use_container_width=True) # Display map
         
     with tab2:
