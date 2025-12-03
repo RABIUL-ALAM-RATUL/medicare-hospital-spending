@@ -42,7 +42,7 @@ This repository contains the complete reproducible pipeline for the study:
 
 app.py: The production-ready source code for the Streamlit web application, including all visualisation logic and interactive components.
 
-Final_Draft_26_11_25.ipynb: The Jupyter Notebook documenting the end-to-end data science pipeline, including data cleaning (imputation/capping), Exploratory Data Analysis (EDA), Feature Engineering, and Machine Learning model training.
+Medicare Hospital Spending by Claim (USA).ipynb: The Jupyter Notebook documenting the end-to-end data science pipeline, including data cleaning (imputation/capping), Exploratory Data Analysis (EDA), Feature Engineering, and Machine Learning model training.
 
 df_final.parquet: The pre-processed, engineered, and compressed dataset utilised by the dashboard (generated via the notebook pipeline).
 
@@ -67,7 +67,7 @@ Execution
 
 To audit the analytical pipeline:
 
-Jupyter Notebook Final_Draft_26_11_25.ipynb
+Jupyter Notebook Medicare Hospital Spending by Claim (USA).ipynb
 
 
 To launch the interactive dashboard:
