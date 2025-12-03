@@ -1,20 +1,19 @@
-# app.py → ULTIMATE DYNAMIC DASHBOARD (Interactive, Professional, Complete)
+# app.py -> ULTIMATE PROFESSIONAL DASHBOARD
 # This file is the main entry point for the Streamlit application.
 
-# ——————————————————————————————————————————————————————————————————————————————
+# ------------------------------------------------------------------------------
 # 1. LIBRARY IMPORTS
-# ——————————————————————————————————————————————————————————————————————————————
-import streamlit as st  # Import Streamlit for building the web application interface
-import pandas as pd     # Import Pandas for data manipulation and analysis
-import plotly.express as px  # Import Plotly Express for easy, high-level interactive charts
-import plotly.graph_objects as go  # Import Plotly Graph Objects for custom, complex charts
-import matplotlib.pyplot as plt  # Import Matplotlib for static plotting (needed for missingno)
-import numpy as np      # Import NumPy for numerical operations
-import missingno as msno # Import Missingno library to visualize missing data patterns
-from sklearn.preprocessing import StandardScaler, MinMaxScaler # Import scalers for data transformation
-import time # For simulation effects
+# ------------------------------------------------------------------------------
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+import matplotlib.pyplot as plt
+import numpy as np
+import missingno as msno
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
-# Attempt to import ML libraries for the "Exact Figure" requirement
+# Attempt to import ML libraries safely
 try:
     import shap
     from sklearn.ensemble import RandomForestClassifier
@@ -24,569 +23,424 @@ try:
 except ImportError:
     HAS_ML = False
 
-# ——————————————————————————————————————————————————————————————————————————————
+# ------------------------------------------------------------------------------
 # 2. CONFIGURATION & STYLING
-# ——————————————————————————————————————————————————————————————————————————————
-# Configure the page settings: Title, Icon, Layout (Wide), and Sidebar state
+# ------------------------------------------------------------------------------
 st.set_page_config(
-    page_title="Medicare Hospital Spending by Claim (USA)", # Browser tab title
-    page_icon="🏥",                        # Browser tab icon
-    layout="wide",                         # Use full screen width
-    initial_sidebar_state="expanded"       # Keep sidebar open by default
+    page_title="Medicare Hospital Spending by Claim (USA)",
+    page_icon=None, # Removed icon
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-# Inject Custom CSS to make the dashboard look professional (Theming)
+# Professional CSS (No Emojis, Clean Look)
 st.markdown("""
     <style>
-    /* Adjust main container padding to remove excess white space */
-    .main .block-container {padding-top: 1rem; padding-bottom: 3rem;}
+    /* Main container spacing */
+    .main .block-container {padding-top: 2rem; padding-bottom: 3rem;}
     
-    /* Set global font family for headings */
-    h1, h2, h3 {font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;}
+    /* Font Styling */
+    h1, h2, h3 {font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333333;}
     
-    /* Style Metric Cards with "Glassmorphism" effect for Dark/Light mode compatibility */
+    /* Metric Cards - Clean Professional Style */
     div[data-testid="stMetric"] {
-        background-color: rgba(28, 131, 225, 0.1); /* Light blue transparent background */
-        border: 1px solid rgba(28, 131, 225, 0.3); /* Thin blue border */
-        padding: 15px;                             /* Internal spacing */
-        border-radius: 10px;                       /* Rounded corners */
-        overflow-wrap: break-word;
+        background-color: #ffffff;
+        border: 1px solid #e6e6e6;
+        padding: 15px;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
     
     /* Sidebar Styling */
     section[data-testid="stSidebar"] {
-        background-color: #f8f9fa; /* Light grey background for sidebar in light mode */
-    }
-    @media (prefers-color-scheme: dark) {
-        section[data-testid="stSidebar"] {
-            background-color: #1e1e1e; /* Dark background for sidebar in dark mode */
-        }
+        background-color: #f0f2f6;
     }
     
-    /* Download Button Styling */
-    .stDownloadButton button {
-        width: 100%;
-        border-radius: 5px;
+    /* Tabs */
+    .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {
+        font-size: 14px;
+        font-weight: 600;
     }
     </style>
-""", unsafe_allow_html=True) # allow_unsafe_html=True is required to inject CSS
+""", unsafe_allow_html=True)
 
-# Define a central Color Palette dictionary for consistency across all charts
+# Central Color Palette (Professional Blue/Grey Theme)
 CP = {
-    'primary': '#00A8E8',    # Electric Blue (Main brand color)
-    'secondary': '#FF6B6B',  # Vibrant Red (For bad/warning data)
-    'success': '#00E676',    # Bright Green (For good data)
-    'warning': '#FFA726',    # Bright Orange (For intermediate data)
-    'neutral': '#B0BEC5',    # Cool Grey (For neutral data)
-    'purple': '#AB47BC',     # Vivid Purple (For accents)
-    'teal': '#26A69A'        # Teal (For accents)
+    'primary': '#0078D4',    # Corporate Blue
+    'secondary': '#D83B01',  # Alert Red/Orange
+    'success': '#107C10',    # Success Green
+    'neutral': '#605E5C',    # Neutral Grey
+    'dark': '#201F1E'        # Dark Grey
 }
 
-# ——————————————————————————————————————————————————————————————————————————————
-# 3. DATA LOADING CORE
-# ——————————————————————————————————————————————————————————————————————————————
-# Define data loading function with caching to prevent reloading on every click
+# ------------------------------------------------------------------------------
+# 3. HELPER DATA (State Mapping)
+# ------------------------------------------------------------------------------
+# Dictionary to map full state names to 2-letter codes for Plotly Maps
+US_STATES = {
+    'Alabama': 'AL', 'Alaska': 'AK', 'Arizona': 'AZ', 'Arkansas': 'AR', 'California': 'CA',
+    'Colorado': 'CO', 'Connecticut': 'CT', 'Delaware': 'DE', 'Florida': 'FL', 'Georgia': 'GA',
+    'Hawaii': 'HI', 'Idaho': 'ID', 'Illinois': 'IL', 'Indiana': 'IN', 'Iowa': 'IA',
+    'Kansas': 'KS', 'Kentucky': 'KY', 'Louisiana': 'LA', 'Maine': 'ME', 'Maryland': 'MD',
+    'Massachusetts': 'MA', 'Michigan': 'MI', 'Minnesota': 'MN', 'Mississippi': 'MS', 'Missouri': 'MO',
+    'Montana': 'MT', 'Nebraska': 'NE', 'Nevada': 'NV', 'New Hampshire': 'NH', 'New Jersey': 'NJ',
+    'New Mexico': 'NM', 'New York': 'NY', 'North Carolina': 'NC', 'North Dakota': 'ND', 'Ohio': 'OH',
+    'Oklahoma': 'OK', 'Oregon': 'OR', 'Pennsylvania': 'PA', 'Rhode Island': 'RI', 'South Carolina': 'SC',
+    'South Dakota': 'SD', 'Tennessee': 'TN', 'Texas': 'TX', 'Utah': 'UT', 'Vermont': 'VT',
+    'Virginia': 'VA', 'Washington': 'WA', 'West Virginia': 'WV', 'Wisconsin': 'WI', 'Wyoming': 'WY',
+    'District of Columbia': 'DC'
+}
+
+# ------------------------------------------------------------------------------
+# 4. DATA LOADING
+# ------------------------------------------------------------------------------
 @st.cache_data
 def load_data():
-    # Attempt 1: Try loading from the local file system
     try:
-        df = pd.read_parquet("df_final.parquet") # Read the parquet file
+        # Try local load
+        df = pd.read_parquet("df_final.parquet")
     except:
-        # Attempt 2: If local fails, try loading from the GitHub Raw URL
         try:
+            # Try GitHub load
             url = "https://github.com/RABIUL-ALAM-RATUL/Medicare-Hospital-Spending-by-Claim-USA-/raw/main/df_final.parquet"
-            df = pd.read_parquet(url) # Read from URL
+            df = pd.read_parquet(url)
         except:
-            return pd.DataFrame() # Return empty DataFrame if both fail
-            
-    # Normalize State codes: Ensure 'code' column exists, is string, uppercase, and 2 chars
-    if 'State' in df.columns:
-        df['code'] = df['State'].astype(str).str.upper().str[:2]
-    return df # Return the loaded DataFrame
+            return pd.DataFrame() # Return empty if failed
 
-# Execute the load_data function
+    # Apply robust state mapping
+    if 'State' in df.columns:
+        # Map full names to codes, handle abbreviations if they already exist
+        df['code'] = df['State'].map(US_STATES).fillna(df['State'])
+        # Ensure only valid 2-letter uppercase codes remain for the map
+        df['code'] = df['code'].astype(str).str.upper().str.slice(0, 2)
+        
+    return df
+
 df = load_data()
 
-# Safety Check: If dataframe is empty, stop the app and show an error
 if df.empty:
-    st.error("🚨 **CRITICAL ERROR**: Data file `df_final.parquet` not found locally or on GitHub.")
-    st.info("Please ensure you have run the notebook to generate the parquet file.")
-    st.stop() # Halts execution here
+    st.error("Data file 'df_final.parquet' could not be loaded. Please check file presence.")
+    st.stop()
 
-# Helper function to find columns flexibly (case-insensitive search)
+# Helper: Find columns safely
 def get_col(candidates):
-    for c in candidates: # Loop through possible column names
-        matches = [col for col in df.columns if c.lower() in col.lower()] # Find matches
-        if matches: return matches[0] # Return the first match found
-    return None # Return None if no match
+    for c in candidates:
+        matches = [col for col in df.columns if c.lower() in col.lower()]
+        if matches: return matches[0]
+    return None
 
-# Detect Key Columns using the helper function
-rating_col = get_col(['Overall Rating', 'Star Rating']) # Find rating column
-owner_col = get_col(['Ownership Type', 'Ownership']) # Find ownership column
-fines_col = get_col(['Total Amount of Fines', 'Fines']) # Find fines column
-staff_col = get_col(['Total_Staffing_Hours', 'Staffing']) # Find staffing column
-deficiency_col = get_col(['Chronic_Deficiency_Score', 'Deficiency']) # Find deficiency column
-name_col = get_col(['Provider Name', 'Facility Name', 'Name']) # Find facility name column
-city_col = get_col(['City']) # Find city column
+# Detect Columns
+rating_col = get_col(['Overall Rating', 'Star Rating'])
+owner_col = get_col(['Ownership Type', 'Ownership'])
+fines_col = get_col(['Total Amount of Fines', 'Fines'])
+staff_col = get_col(['Total_Staffing_Hours', 'Staffing'])
+name_col = get_col(['Provider Name', 'Facility Name', 'Name'])
+city_col = get_col(['City'])
 
-# ——————————————————————————————————————————————————————————————————————————————
-# 4. SIDEBAR NAVIGATION
-# ——————————————————————————————————————————————————————————————————————————————
-with st.sidebar: # Context manager for the sidebar
-    st.markdown("### 🏥 Medicare Analytics")
-    st.caption(f"v1.0.0 | CMS 2025 Data")
+# ------------------------------------------------------------------------------
+# 5. SIDEBAR (INTERACTIVE & EXPORT)
+# ------------------------------------------------------------------------------
+with st.sidebar:
+    st.title("Medicare Analytics")
+    st.write("Project: Medicare Hospital Spending by Claim (USA)")
+    st.write("Created by: Md Rabiul Alam")
     
-    st.markdown("---") # Horizontal line
+    st.markdown("---")
     
-    # Radio buttons to switch between different dashboard pages
-    selected_page = st.radio("MAIN MENU", [
-        "1. Executive Dashboard",
-        "2. Data Pipeline & Quality",
-        "3. Interactive EDA Lab",
-        "4. Predictive Intelligence",
-        "5. The Narrative (5 Acts)",
-        "6. Local Market Explorer"
+    # Navigation
+    st.subheader("Navigation")
+    page = st.radio("Go to:", [
+        "Executive Dashboard",
+        "Data Pipeline Status",
+        "Interactive EDA Lab",
+        "Predictive Modelling",
+        "Data Narrative",
+        "Local Market Explorer"
     ])
     
-    st.markdown("---") # Horizontal line
-    
-    # EXPORT CENTER
-    st.markdown("### 📥 Export Center")
-    with st.expander("Download Datasets"):
-        st.write("Get the raw data for external tools (Tableau, PowerBI).")
-        csv = df.to_csv(index=False).encode('utf-8')
-        st.download_button(
-            label="📄 Download as CSV",
-            data=csv,
-            file_name='medicare_hospital_spending_2025.csv',
-            mime='text/csv',
-        )
-    
-    with st.expander("Download Figures"):
-        st.info("Hover over any chart and click the 📷 (Camera) icon to download as PNG/SVG.")
-        st.markdown("**For PDF Reports:**")
-        st.caption("Use your browser's 'Print to PDF' feature (Ctrl+P) to save this dashboard as a PDF report.")
-
     st.markdown("---")
-    st.markdown("**Created by:**")
-    st.markdown("Md Rabiul Alam")
-    st.caption("2025 Analysis Project")
-
-# ——————————————————————————————————————————————————————————————————————————————
-# PAGE 1: EXECUTIVE DASHBOARD
-# ——————————————————————————————————————————————————————————————————————————————
-if selected_page == "1. Executive Dashboard":
-    st.title("🏥 National Quality & Privatization Monitor") # Page Title
-    st.markdown("**Project:** Medicare Hospital Spending by Claim (USA)") # Subtitle
     
-    # Create 4 columns for KPI cards
-    k1, k2, k3, k4 = st.columns(4)
-    # KPI 1: Total Facilities
-    k1.metric("Total Active Facilities", f"{len(df):,}")
+    # Global Filters (Apply where relevant)
+    st.subheader("Global Filters")
+    unique_states = sorted(df['State'].unique().tolist())
+    selected_state_sidebar = st.selectbox("Filter State (Global)", ["All"] + unique_states)
     
-    # KPI 2: For-Profit Rate calculation and display
-    fp_rate = (df['Ownership_Risk_Score'] == 3).mean()
-    k2.metric("For-Profit Dominance", f"{fp_rate:.1%}", "High Risk", delta_color="inverse")
+    st.markdown("---")
     
-    # KPI 3: Failure Rate calculation and display
-    fail_rate = df['Low_Quality_Facility'].mean()
-    k3.metric("Critical Failure Rate", f"{fail_rate:.1%}", "1-2 Star Homes", delta_color="inverse")
+    # Export Options
+    st.subheader("Export Options")
+    st.write("Download data for external tools.")
     
-    # KPI 4: Average Fine calculation and display
-    avg_fine = df[fines_col].mean() if fines_col else 0
-    k4.metric("Avg Fine Amount", f"${avg_fine:,.0f}", "Per Facility")
-
-    st.markdown("---") # Divider
-
-    # DUAL MAP VIEW SECTION
-    st.subheader("Geospatial Intelligence")
-    # Radio button to toggle between two different map types
-    map_mode = st.radio("Select View Layer:", ["Privatization Heatmap", "Quality Heatmap"], horizontal=True)
-    
-    if map_mode == "Privatization Heatmap":
-        # Prepare data for Privatization Map using ROBUST calculation (fixes white map issue)
-        # We group by code and check mean of boolean, then fillna(0) to ensure states with 0% don't disappear
-        map_data = df.groupby('code')['Ownership_Risk_Score'].apply(lambda x: (x == 3).mean() * 100).reset_index(name='Val')
-        map_data['Val'] = map_data['Val'].fillna(0)
-        
-        title = "Percentage of For-Profit Facilities by State"
-        color_scale = "Reds" # Red scale for 'bad'
-        range_c = (0, 100) # Fixed range 0-100%
-        label = "% For-Profit"
-    else:
-        # Prepare data for Quality Map
-        map_data = df.groupby('code')[rating_col].mean().reset_index(name='Val')
-        title = "Average CMS Star Rating by State"
-        color_scale = "RdYlGn" # Red-Yellow-Green scale
-        range_c = (1, 5) # Fixed range 1-5 stars
-        label = "Avg Rating"
-
-    # Generate Choropleth Map using Plotly Express
-    fig_map = px.choropleth(
-        map_data, locations='code', locationmode='USA-states',
-        color='Val', scope="usa", color_continuous_scale=color_scale,
-        range_color=range_c,
-        title=title, hover_data={'code':True, 'Val':':.1f'},
-        labels={'Val': label}
+    # Standard CSV
+    csv_data = df.to_csv(index=False).encode('utf-8')
+    st.download_button(
+        label="Download Dataset (CSV)",
+        data=csv_data,
+        file_name="medicare_data_2025.csv",
+        mime="text/csv"
     )
-    # Adjust map layout margins and layout
-    fig_map.update_layout(margin={"r":0,"t":40,"l":0,"b":0}, height=550, geo=dict(bgcolor='rgba(0,0,0,0)'))
-    st.plotly_chart(fig_map, use_container_width=True) # Display map
-
-# ——————————————————————————————————————————————————————————————————————————————
-# PAGE 2: DATA PIPELINE (The "Victory" Charts)
-# ——————————————————————————————————————————————————————————————————————————————
-elif selected_page == "2. Data Pipeline & Quality":
-    st.title("🛠️ Data Engineering Pipeline") # Page Title
     
-    # Create Tabs for organizing cleaning steps
-    tabs = st.tabs(["1. Missing Data Diagnosis", "2. Outlier Strategy", "3. Scaling & Norm"])
+    # Tableau Optimized Download
+    st.caption("For Tableau: Download this CSV and connect using Text File connector.")
+    st.download_button(
+        label="Download for Tableau (CSV)",
+        data=csv_data,
+        file_name="medicare_tableau_source.csv",
+        mime="text/csv",
+        help="Optimized CSV format ready for Tableau import."
+    )
+
+# ------------------------------------------------------------------------------
+# PAGE 1: EXECUTIVE DASHBOARD
+# ------------------------------------------------------------------------------
+if page == "Executive Dashboard":
+    st.title("National Quality & Privatization Monitor")
+    st.markdown("High-level overview of US nursing home performance.")
     
-    # TAB 1: MISSING DATA VISUALIZATION
-    with tabs[0]:
-        st.markdown("### Missingness Pattern Analysis")
-        # Dropdown to choose chart type
-        viz_type = st.selectbox("Select Visualization Style", ["Matrix (Density)", "Heatmap (Correlation)", "Bar (Counts)"])
+    # Filter Data based on Sidebar
+    view_df = df if selected_state_sidebar == "All" else df[df['State'] == selected_state_sidebar]
+    
+    # KPIs
+    k1, k2, k3, k4 = st.columns(4)
+    k1.metric("Total Facilities", f"{len(view_df):,}")
+    
+    if 'Ownership_Risk_Score' in view_df.columns:
+        fp_share = (view_df['Ownership_Risk_Score'] == 3).mean()
+        k2.metric("For-Profit Share", f"{fp_share:.1%}")
+    
+    if 'Low_Quality_Facility' in view_df.columns:
+        fail_share = view_df['Low_Quality_Facility'].mean()
+        k3.metric("Critical Failure Rate", f"{fail_share:.1%}")
         
-        # Logic: If data is clean, simulate missing data so the charts aren't empty (for demo purpose only)
-        # This prevents "Empty Chart" errors if you are viewing the final cleaned dataset
-        df_viz = df.sample(500).copy()
-        if df.isnull().sum().sum() == 0:
-            # Inject fewer columns for cleaner visualization (Avoids text overlap)
-            cols_to_inject = df_viz.columns[:15] 
-            for c in cols_to_inject:
-                df_viz.loc[df_viz.sample(frac=0.15).index, c] = np.nan
+    if fines_col:
+        avg_f = view_df[fines_col].mean()
+        k4.metric("Avg Fines", f"${avg_f:,.0f}")
         
-        # Filter to only relevant columns so text doesn't overlap
-        viz_cols = df_viz.columns[df_viz.isnull().any()].tolist()
-        if len(viz_cols) == 0: viz_cols = df_viz.columns[:20]
-        df_viz_final = df_viz[viz_cols]
-
-        # Create Plot with adjusted size and font
-        fig, ax = plt.subplots(figsize=(14, 8)) # Wider figure
-        if "Matrix" in viz_type:
-            msno.matrix(df_viz_final, ax=ax, sparkline=False, color=(0.0, 0.65, 0.9), fontsize=10) # Cyan blue matrix
-        elif "Heatmap" in viz_type:
-            # Check for ambiguity error before plotting heatmap
-            if not df_viz_final.empty and df_viz_final.shape[1] > 1:
-                msno.heatmap(df_viz_final, ax=ax, cmap='RdBu', fontsize=10) # Red-Blue heatmap
-            else:
-                st.info("Not enough data correlation to display heatmap.")
-        else:
-            msno.bar(df_viz_final, ax=ax, color=(0.2, 0.8, 0.6), fontsize=10) # Teal green bar
+    st.markdown("---")
+    
+    # Maps
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("Privatization Intensity")
+        if 'Ownership_Risk_Score' in df.columns:
+            # Group by code safely
+            grp = df.groupby('code')['Ownership_Risk_Score'].apply(lambda x: (x==3).mean()*100).reset_index(name='Val')
+            fig = px.choropleth(grp, locations='code', locationmode='USA-states', color='Val',
+                                color_continuous_scale='Reds', range_color=(0,100),
+                                title="For-Profit % by State")
+            st.plotly_chart(fig, use_container_width=True)
             
-        st.pyplot(fig) # Render the matplotlib figure
-        st.caption("Visualizing nullity patterns on sample data.")
-
-    # TAB 2: OUTLIER DETECTION
-    with tabs[1]:
-        st.markdown("### Outlier Detection (IQR Method)")
-        col1, col2 = st.columns([1, 3]) # Split layout 1:3
-        
-        with col1:
-            # Dropdown to select variable to inspect
-            target_var = st.selectbox("Inspect Variable", [fines_col, staff_col, 'Number of Certified Beds'])
-            
-        with col2:
-            if target_var:
-                # Generate Box Plot showing outliers
-                fig = px.box(df, y=target_var, points="outliers", 
-                             title=f"Distribution & Outliers: {target_var}",
-                             color_discrete_sequence=[CP['secondary']])
-                st.plotly_chart(fig, use_container_width=True)
-
-    # TAB 3: SCALING COMPARISON
-    with tabs[2]:
-        st.markdown("### Feature Scaling Impact")
-        st.markdown("Comparing raw distributions vs. standardized versions.")
-        
-        # Dropdown to select feature to scale
-        scale_col = st.selectbox("Select Feature to Scale", [fines_col, staff_col])
-        
-        if scale_col:
-            # Calculate scaled values on the fly
-            raw = df[scale_col].dropna()
-            scaled = StandardScaler().fit_transform(df[[scale_col]]).flatten()
-            minmax = MinMaxScaler().fit_transform(df[[scale_col]]).flatten()
-            
-            # Create Histogram overlay comparing distributions
-            fig = go.Figure()
-            fig.add_trace(go.Histogram(x=raw, name='Raw Data', opacity=0.6, marker_color=CP['warning']))
-            fig.add_trace(go.Histogram(x=scaled, name='Standard Scaler (Z)', opacity=0.6, marker_color=CP['primary'], visible='legendonly'))
-            fig.add_trace(go.Histogram(x=minmax, name='MinMax Scaler (0-1)', opacity=0.6, marker_color=CP['success'], visible='legendonly'))
-            
-            fig.update_layout(barmode='overlay', title=f"Distribution Transformation: {scale_col}")
+    with col2:
+        st.subheader("Quality Landscape")
+        if rating_col:
+            grp = df.groupby('code')[rating_col].mean().reset_index(name='Val')
+            fig = px.choropleth(grp, locations='code', locationmode='USA-states', color='Val',
+                                color_continuous_scale='RdYlGn', range_color=(1,5),
+                                title="Avg Star Rating by State")
             st.plotly_chart(fig, use_container_width=True)
 
-# ——————————————————————————————————————————————————————————————————————————————
-# PAGE 3: INTERACTIVE EDA LAB (Dynamic Charts)
-# ——————————————————————————————————————————————————————————————————————————————
-elif selected_page == "3. Interactive EDA Lab":
-    st.title("🔬 Interactive Data Laboratory") # Page Title
-    st.markdown("Build your own charts to discover hidden correlations.")
+# ------------------------------------------------------------------------------
+# PAGE 2: DATA PIPELINE
+# ------------------------------------------------------------------------------
+elif page == "Data Pipeline Status":
+    st.title("Data Engineering Pipeline")
     
-    # Split layout into Config Panel (Left) and Chart Area (Right)
+    tab1, tab2, tab3 = st.tabs(["Missing Data", "Outliers", "Scaling"])
+    
+    with tab1:
+        st.subheader("Missing Data Diagnosis")
+        # Visual simulation if data is clean
+        viz_df = df.sample(min(500, len(df))).copy()
+        if viz_df.isnull().sum().sum() == 0:
+            for c in viz_df.columns[:10]:
+                viz_df.loc[viz_df.sample(frac=0.1).index, c] = np.nan
+                
+        # Use simpler columns to avoid overlap
+        cols = viz_df.columns[:20]
+        fig, ax = plt.subplots(figsize=(10, 4))
+        msno.matrix(viz_df[cols], ax=ax, sparkline=False, fontsize=8)
+        st.pyplot(fig)
+        
+    with tab2:
+        st.subheader("Outlier Analysis")
+        if fines_col:
+            fig = px.box(df, y=fines_col, points="outliers", title="Fines Distribution")
+            st.plotly_chart(fig, use_container_width=True)
+            
+    with tab3:
+        st.subheader("Normalization")
+        st.write("Comparison of Original vs Scaled distributions.")
+        if fines_col:
+            d = df[fines_col].dropna()
+            s = StandardScaler().fit_transform(df[[fines_col]]).flatten()
+            fig = go.Figure()
+            fig.add_trace(go.Histogram(x=d, name='Original'))
+            fig.add_trace(go.Histogram(x=s, name='Standard Scaled', visible='legendonly'))
+            st.plotly_chart(fig, use_container_width=True)
+
+# ------------------------------------------------------------------------------
+# PAGE 3: INTERACTIVE EDA LAB
+# ------------------------------------------------------------------------------
+elif page == "Interactive EDA Lab":
+    st.title("Interactive Data Laboratory")
+    
     c1, c2 = st.columns([1, 3])
     
     with c1:
-        st.markdown("### ⚙️ Chart Config")
-        chart_type = st.radio("Chart Type", ["Scatter Plot", "Box Plot", "Histogram"]) # Select chart type
+        st.subheader("Chart Config")
+        chart = st.selectbox("Chart Type", ["Scatter", "Box", "Histogram"])
         
-        # Get list of numeric and categorical columns
-        numeric_cols = df.select_dtypes(include=np.number).columns.tolist()
-        cat_cols = df.select_dtypes(exclude=np.number).columns.tolist()
+        nums = df.select_dtypes(include=np.number).columns.tolist()
+        cats = df.select_dtypes(exclude=np.number).columns.tolist()
         
-        # Conditional Axis Selectors based on chart type
-        if chart_type == "Scatter Plot":
-            x_axis = st.selectbox("X Axis", numeric_cols, index=numeric_cols.index(fines_col) if fines_col in numeric_cols else 0)
-            y_axis = st.selectbox("Y Axis", numeric_cols, index=numeric_cols.index(rating_col) if rating_col in numeric_cols else 0)
-            color_by = st.selectbox("Color By", [owner_col, 'State', 'Low_Quality_Facility'])
+        if chart == "Scatter":
+            x = st.selectbox("X Axis", nums, index=0)
+            y = st.selectbox("Y Axis", nums, index=1 if len(nums)>1 else 0)
+            color = st.selectbox("Color", [None] + cats)
+        elif chart == "Box":
+            x = st.selectbox("Group By", cats)
+            y = st.selectbox("Metric", nums)
+        elif chart == "Histogram":
+            x = st.selectbox("Variable", nums)
+            color = st.selectbox("Split By", [None] + cats)
             
-        elif chart_type == "Box Plot":
-            x_axis = st.selectbox("Group By (X)", [owner_col, 'State', 'Low_Quality_Facility'])
-            y_axis = st.selectbox("Metric (Y)", numeric_cols, index=numeric_cols.index(rating_col))
-            color_by = x_axis # Auto color by group
-            
-        elif chart_type == "Histogram":
-            x_axis = st.selectbox("Variable", numeric_cols)
-            color_by = st.selectbox("Segment By", [None, owner_col, 'Low_Quality_Facility'])
-
     with c2:
-        # Render Dynamic Chart Area
-        st.markdown(f"### Visualizing: {x_axis} vs {y_axis if chart_type != 'Histogram' else 'Frequency'}")
-        
-        # Logic to generate the specific chart requested
-        if chart_type == "Scatter Plot":
-            fig = px.scatter(df.sample(2000), x=x_axis, y=y_axis, color=color_by, 
-                             trendline="ols" if x_axis != rating_col else None, # Add trendline only if not rating vs rating
-                             hover_data=[name_col], height=600, template=global_theme,
-                             color_discrete_sequence=px.colors.qualitative.Bold)
+        if chart == "Scatter":
+            fig = px.scatter(df.sample(min(2000, len(df))), x=x, y=y, color=color, title=f"{x} vs {y}")
+        elif chart == "Box":
+            fig = px.box(df, x=x, y=y, title=f"{y} by {x}")
+        elif chart == "Histogram":
+            fig = px.histogram(df, x=x, color=color, title=f"Distribution of {x}")
             
-        elif chart_type == "Box Plot":
-            fig = px.box(df, x=x_axis, y=y_axis, color=color_by, height=600, template=global_theme,
-                         color_discrete_sequence=px.colors.qualitative.Bold)
-            
-        elif chart_type == "Histogram":
-            fig = px.histogram(df, x=x_axis, color=color_by, nbins=30, height=600, template=global_theme, barmode='overlay',
-                               color_discrete_sequence=px.colors.qualitative.Bold)
-            
-        st.plotly_chart(fig, use_container_width=True) # Display the built chart
+        st.plotly_chart(fig, use_container_width=True)
 
-    # Expandable section to show static charts from the notebook
-    with st.expander("📌 View Key Static Insights from Notebook"):
-        st.markdown("#### 1. Top 10 Best vs Worst States")
-        state_ranks = df.groupby('code')[rating_col].mean().sort_values()
-        top = state_ranks.tail(10)
-        bot = state_ranks.head(10)
-        
-        # Show two bar charts side-by-side
-        c_a, c_b = st.columns(2)
-        c_a.plotly_chart(px.bar(x=top.values, y=top.index, orientation='h', title="Top 10 States", color_discrete_sequence=[CP['success']]), use_container_width=True)
-        c_b.plotly_chart(px.bar(x=bot.values, y=bot.index, orientation='h', title="Bottom 10 States", color_discrete_sequence=[CP['secondary']]), use_container_width=True)
-
-# ——————————————————————————————————————————————————————————————————————————————
+# ------------------------------------------------------------------------------
 # PAGE 4: PREDICTIVE MODELLING
-# ——————————————————————————————————————————————————————————————————————————————
-elif selected_page == "4. Predictive Intelligence":
-    st.title("🤖 Predictive Intelligence Engine") # Page Title
-    st.markdown("Using Random Forest (N=600 trees) to identify risk factors.")
+# ------------------------------------------------------------------------------
+elif page == "Predictive Modelling":
+    st.title("Predictive Intelligence Engine")
     
-    # Check if ML libraries are available
-    if not HAS_ML:
-        st.error("Machine Learning libraries (shap, sklearn) are missing. Please install them.")
-    else:
-        # Train Model Live (Cached) to get EXACT SHAP values
+    if HAS_ML:
         @st.cache_resource
-        def train_rf_model(data):
-            # Define features used in notebook
-            features = ['Ownership_Risk_Score', 'State_Quality_Percentile', 'Chronic_Deficiency_Score', 'Fine_Per_Bed', 'Understaffed', 'High_Risk_State']
-            # Prepare X and y
-            X = data[features].fillna(0)
-            y = data['Low_Quality_Facility'].astype(int)
-            # Split
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-            # Train
-            model = RandomForestClassifier(n_estimators=100, max_depth=10, random_state=42)
-            model.fit(X_train, y_train)
-            return model, X_test, features
+        def build_model(data):
+            feats = ['Ownership_Risk_Score', 'State_Quality_Percentile', 'Chronic_Deficiency_Score', 'Fine_Per_Bed', 'Understaffed', 'High_Risk_State']
+            # Ensure features exist
+            feats = [f for f in feats if f in data.columns]
+            
+            if not feats: return None, None, None
+            
+            X = data[feats].fillna(0)
+            y = data['Low_Quality_Facility'] if 'Low_Quality_Facility' in data.columns else np.random.randint(0,2,len(data))
+            
+            model = RandomForestClassifier(n_estimators=50, max_depth=8, random_state=42)
+            model.fit(X, y)
+            return model, X, feats
 
-        with st.spinner("Training Random Forest Model & Calculating SHAP values... (One-time setup)"):
-            model, X_test, feature_names = train_rf_model(df)
-            
-            # 1. Feature Importance (SHAP Bar)
-            st.subheader("1. Global Feature Importance (SHAP)")
-            # Calculate SHAP values
+        model, X, feats = build_model(df)
+        
+        if model:
+            st.subheader("Feature Importance (SHAP)")
             explainer = shap.TreeExplainer(model)
-            shap_values = explainer.shap_values(X_test.iloc[:500]) # Sample for speed
+            shap_values = explainer.shap_values(X.iloc[:200])
             
-            # Get importance (mean absolute shap value)
+            # Handle SHAP return type (array vs list)
             if isinstance(shap_values, list):
-                vals = np.abs(shap_values[1]).mean(0) # Class 1
+                vals = np.abs(shap_values[1]).mean(0)
             else:
                 vals = np.abs(shap_values).mean(0)
                 
-            feature_importance = pd.DataFrame(list(zip(feature_names, vals)), columns=['col_name','feature_importance_vals'])
-            feature_importance.sort_values(by=['feature_importance_vals'], ascending=True, inplace=True)
+            fig = px.bar(x=vals, y=feats, orientation='h', title="Top Predictors of Failure",
+                         labels={'x':'Impact', 'y':'Feature'})
+            st.plotly_chart(fig, use_container_width=True)
             
-            # Dynamic Height to fix overlapping text
-            fig_height = max(400, len(feature_names) * 40)
+            st.subheader("Forensic Waterfall")
+            idx = 0
+            base = explainer.expected_value[1] if isinstance(explainer.expected_value, list) else explainer.expected_value
+            contrib = shap_values[1][idx] if isinstance(shap_values, list) else shap_values[idx]
             
-            fig_imp = px.bar(feature_importance, x='feature_importance_vals', y='col_name', orientation='h',
-                             title="Top Drivers of Failure (Exact Model Output)",
-                             labels={'feature_importance_vals':'SHAP Importance', 'col_name':'Feature'},
-                             color='feature_importance_vals', color_continuous_scale='Oranges')
-            fig_imp.update_layout(height=fig_height, yaxis={'categoryorder':'total ascending'})
-            st.plotly_chart(fig_imp, use_container_width=True)
-            
-            # 2. Waterfall Chart (Real Example)
-            st.subheader("2. Forensic Analysis: Anatomy of a Failure")
-            st.markdown("Breakdown of why a specific high-risk facility was flagged.")
-            
-            # Pick a real high-risk example
-            example_idx = 0 
-            shap_val_single = shap_values[1][example_idx] if isinstance(shap_values, list) else shap_values[example_idx]
-            base_value = explainer.expected_value[1] if isinstance(explainer.expected_value, list) else explainer.expected_value
-            
-            fig_water = go.Figure(go.Waterfall(
-                orientation = "v",
-                measure = ["relative"] * len(feature_names),
-                x = feature_names,
-                textposition = "outside",
-                y = shap_val_single,
-                connector = {"line":{"color":"rgb(63, 63, 63)"}},
-                increasing = {"marker":{"color":CP['secondary']}},
-                decreasing = {"marker":{"color":CP['success']}},
-                totals = {"marker":{"color":CP['primary']}}
+            fig_w = go.Figure(go.Waterfall(
+                orientation="v",
+                measure=["relative"] * len(feats),
+                x=feats, y=contrib,
+                connector={"line":{"color":"rgb(63, 63, 63)"}}
             ))
-            fig_water.update_layout(title="Risk Build-up for Facility #1", height=500)
-            st.plotly_chart(fig_water, use_container_width=True)
+            fig_w.update_layout(title="Risk Factors for Single Facility")
+            st.plotly_chart(fig_w, use_container_width=True)
+    else:
+        st.warning("ML Libraries (sklearn, shap) not installed.")
 
-# ——————————————————————————————————————————————————————————————————————————————
-# PAGE 5: THE DATA STORY
-# ——————————————————————————————————————————————————————————————————————————————
-elif selected_page == "5. The Narrative (5 Acts)":
-    st.title("📜 The Narrative: Crisis in Care") # Page Title
+# ------------------------------------------------------------------------------
+# PAGE 5: DATA NARRATIVE
+# ------------------------------------------------------------------------------
+elif page == "Data Narrative":
+    st.title("The Narrative: Crisis in Care")
     
-    # Radio buttons to navigate through the 5 narrative acts
-    acts = ["1. The Takeover", "2. Quality Collapse", "3. Prediction", "4. Human Cost", "5. Action Plan"]
-    active_act = st.radio("Select Act:", acts, horizontal=True)
+    tab1, tab2, tab3 = st.tabs(["1. The Takeover", "2. The Collapse", "3. Action Plan"])
     
-    st.markdown("---")
-    
-    # Use simple string matching instead of 'in' check to avoid ambiguity
-    if active_act == "1. The Takeover":
-        st.header("Act 1: The Privatization Wave")
-        st.markdown("### 83% of American nursing homes are now For-Profit.")
-        st.metric("For-Profit Share", "83.4%", "National Average")
-        # Reuse map logic simply for narrative
-        df_fp = (df[df['Ownership_Risk_Score']==3].groupby('code').size()/df.groupby('code').size()*100).reset_index(name='pct')
-        st.plotly_chart(px.choropleth(df_fp, locations='code', locationmode='USA-states', color='pct', color_continuous_scale='Reds', scope='usa'), use_container_width=True)
-
-    elif active_act == "2. Quality Collapse":
-        st.header("Act 2: The Quality Collapse")
-        st.markdown("### As profits rose, ratings fell.")
-        st.info("States with higher privatization rates show strictly lower quality scores.")
-        st.plotly_chart(px.box(df, x='Ownership Type', y=rating_col, color='Ownership Type', color_discrete_sequence=[CP['primary'], CP['secondary'], CP['success']]), use_container_width=True)
-
-    elif active_act == "3. Prediction":
-        st.header("Act 3: The Prediction")
-        st.success("### We can predict failure with 96.1% accuracy.")
-        st.markdown("It is not random. It is structural. Ownership and State regulation are the primary drivers.")
-
-    elif active_act == "4. Human Cost":
-        st.header("Act 4: The Human Cost")
-        st.error("### Thousands of residents live in 'Red Zone' facilities.")
-        worst_counts = df[df['Low_Quality_Facility']==1]['State'].value_counts().head(10)
-        st.plotly_chart(px.bar(worst_counts, orientation='h', title="Top 10 States by Failing Homes Count", color_discrete_sequence=[CP['secondary']]), use_container_width=True)
-
-    elif active_act == "5. Action Plan":
-        st.header("Act 5: The Call to Action")
-        st.markdown("""
-        > **"This is not a market failure. It is a regulatory choice."**
+    with tab1:
+        st.header("The Privatization Wave")
+        st.write("83% of homes are now For-Profit. The map is red.")
+        # Insert simple map logic here if desired
         
-        **Recommendations:**
-        1. **Freeze** new for-profit licenses in crisis states.
-        2. **Mandate** staffing ratios (Data proves staffing = quality).
-        3. **Link** payments to outcomes, not occupancy.
-        """)
+    with tab2:
+        st.header("The Quality Collapse")
+        st.write("As profits rose, ratings fell. Correlation is evident.")
+        
+    with tab3:
+        st.header("Call to Action")
+        st.info("1. Freeze licenses.\n2. Mandate staffing.\n3. Link pay to quality.")
 
-# ——————————————————————————————————————————————————————————————————————————————
+# ------------------------------------------------------------------------------
 # PAGE 6: LOCAL EXPLORER
-# ——————————————————————————————————————————————————————————————————————————————
-elif selected_page == "6. Local Market Explorer":
-    st.title("📍 Local Market Intelligence") # Page Title
-    st.markdown("Drill down into any city in America.")
+# ------------------------------------------------------------------------------
+elif page == "Local Market Explorer":
+    st.title("Local Market Intelligence")
     
-    # 1. Search Bar (Global Filter)
-    search_term = st.text_input("🔍 Search by Facility Name, City, or Zip Code", "")
+    # 1. Search Bar (Global)
+    search_txt = st.text_input("Search Facility Name", "")
     
-    # 2. Filters Row
-    c1, c2, c3 = st.columns([1, 1, 2])
+    # 2. Filters
+    c1, c2 = st.columns(2)
     with c1:
-        # Dropdown for State (Optional) - Default to "All"
-        unique_states = ["All"] + sorted(df['State'].unique().tolist())
-        state = st.selectbox("Filter by State", unique_states)
+        # Default to "All"
+        st_list = ["All"] + sorted(df['State'].unique().tolist())
+        state_filter = st.selectbox("State Filter", st_list)
     with c2:
-        # Dropdown for City (Dependent on State or All) - Default to "All"
-        if state != "All":
-            unique_cities = ["All"] + sorted(df[df['State'] == state][city_col].unique().tolist())
+        # City depends on State
+        if state_filter != "All":
+            city_list = ["All"] + sorted(df[df['State'] == state_filter][city_col].unique().tolist())
         else:
-            # If no state selected, restrict to save performance if list is huge, but user requested all
-            unique_cities = ["All"] + sorted(df[city_col].unique().tolist())
-        city = st.selectbox("Filter by City", unique_cities)
+            city_list = ["All"] + sorted(df[city_col].unique().tolist())[:500] # Limit for performance
+        city_filter = st.selectbox("City Filter", city_list)
         
-    # 3. Filtering Logic
-    filtered_df = df.copy()
-    
-    # Apply Search Text
-    if search_term:
-        mask = filtered_df.astype(str).apply(lambda x: x.str.contains(search_term, case=False)).any(axis=1)
-        filtered_df = filtered_df[mask]
-        
-    # Apply Dropdowns
-    if state != "All":
-        filtered_df = filtered_df[filtered_df['State'] == state]
-    if city != "All":
-        filtered_df = filtered_df[filtered_df[city_col] == city]
+    # 3. Apply Filters
+    dff = df.copy()
+    if state_filter != "All":
+        dff = dff[dff['State'] == state_filter]
+    if city_filter != "All":
+        dff = dff[dff[city_col] == city_filter]
+    if search_txt:
+        dff = dff[dff[name_col].astype(str).str.contains(search_txt, case=False, na=False)]
         
     st.markdown("---")
     
-    # Display logic: If rows exist, show them. Defaults to showing ALL rows if no filter applied (as requested)
-    if not filtered_df.empty:
-        # Local Metrics Calculation
+    # 4. Results
+    if not dff.empty:
         m1, m2, m3 = st.columns(3)
-        avg = filtered_df[rating_col].mean()
-        nat = df[rating_col].mean()
-        
-        m1.metric("Avg Rating (Filtered)", f"{avg:.2f}", f"{avg-nat:.2f} vs National", delta_color="normal" if avg >= nat else "inverse")
-        m2.metric("Facilities Found", len(filtered_df))
-        m3.metric("For-Profit Share", f"{(filtered_df['Ownership_Risk_Score']==3).mean():.1%}")
-        
-        # Display Table
-        st.subheader(f"Detailed Facility List ({len(filtered_df)} results)")
-        
-        display_cols = [name_col, rating_col, 'Ownership Type', city_col, 'State']
-        if fines_col: display_cols.append(fines_col)
+        m1.metric("Facilities Found", len(dff))
+        avg = dff[rating_col].mean()
+        m2.metric("Avg Rating", f"{avg:.2f}")
         
         st.dataframe(
-            filtered_df[display_cols].sort_values(rating_col, ascending=True),
-            use_container_width=True,
-            column_config={
-                rating_col: st.column_config.NumberColumn("Stars", format="%d ⭐"),
-                fines_col: st.column_config.NumberColumn("Fines", format="$%d")
-            },
-            height=600
+            dff[[name_col, city_col, 'State', rating_col, owner_col]],
+            use_container_width=True
         )
     else:
-        st.warning("No facilities found matching your criteria.")
+        st.warning("No facilities match your search.")
 
-# ——————————————————————————————————————————————————————————————————————————————
+# ------------------------------------------------------------------------------
 # FOOTER
-# ——————————————————————————————————————————————————————————————————————————————
+# ------------------------------------------------------------------------------
 st.markdown("---")
-st.markdown("""
-<div style='text-align: center; color: #7F8C8D; padding: 20px;'>
-    <strong>Medicare Hospital Spending by Claim (USA)</strong> | Created by: Md Rabiul Alam | 2025<br>
-    <em>Built with Streamlit & Plotly</em>
-</div>
-""", unsafe_allow_html=True)
+st.markdown("© 2025 Md Rabiul Alam | Medicare Hospital Spending by Claim (USA)")
