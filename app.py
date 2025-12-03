@@ -467,7 +467,7 @@ elif page == "4. Predictive Modelling":
 # PAGE 5: MARKET EXPLORER (ADDED VALUE MODULE)
 
 elif page == "5. Market & Facility Explorer":
-    st.title("📍 Market & Facility Explorer") # Page Title
+    st.title("Market & Facility Explorer") # Page Title
     st.markdown("Compare a facility against State and National averages.")
     
     # Filters layout
@@ -516,17 +516,17 @@ elif page == "5. Market & Facility Explorer":
         comp_data = {
             "Metric": ["Overall Rating", "Fines ($)", "Staffing Hours"],
             "This Facility": [
-                f"{target[rating_col]} ⭐", 
+                f"{target[rating_col]}", 
                 f"${target[fines_col]:,.0f}" if fines_col else "N/A",
                 f"{target[staff_col]:.2f}" if staff_col else "N/A"
             ],
             "State Avg": [
-                f"{df[df['State']==sel_state][rating_col].mean():.1f} ⭐",
+                f"{df[df['State']==sel_state][rating_col].mean():.1f}",
                 f"${df[df['State']==sel_state][fines_col].mean():,.0f}" if fines_col else "N/A",
                 f"{df[df['State']==sel_state][staff_col].mean():.2f}" if staff_col else "N/A"
             ],
             "National Avg": [
-                f"{df[rating_col].mean():.1f} ⭐",
+                f"{df[rating_col].mean():.1f}",
                 f"${df[fines_col].mean():,.0f}" if fines_col else "N/A",
                 f"{df[staff_col].mean():.2f}" if staff_col else "N/A"
             ]
@@ -537,9 +537,9 @@ elif page == "5. Market & Facility Explorer":
         
         # Status Badge
         if target['Low_Quality_Facility'] == 1:
-            st.error("⚠️ This facility is flagged as **High Risk** (Low Quality).")
+            st.error("This facility is flagged as **High Risk** (Low Quality).")
         else:
-            st.success("✅ This facility meets acceptable quality standards.")
+            st.success("This facility meets acceptable quality standards.")
 
 
 # PAGE 6: NARRATIVE
