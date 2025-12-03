@@ -1,6 +1,6 @@
 Medicare Hospital Spending by Claim (USA)
 
-A National Analysis of 14,752 Certified Facilities | 96.1% Predictive Model Accuracy
+An Analysis of 14,752 Certified Facilities | 96.1% Predictive Model Accuracy
 
 1. Research Abstract & Scope
 
