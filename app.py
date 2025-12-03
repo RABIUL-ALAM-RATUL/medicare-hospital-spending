@@ -100,23 +100,35 @@ def generate_mock_data():
 # Decorator to cache the data loading function so it only runs once (improves performance)
 @st.cache_data
 def load_data():
+    # 1. Try Local File
     try:
-        # Reads the cleaned dataset from the Parquet file (highly efficient)
         df = pd.read_parquet("df_final.parquet")
-        # Creates a 'code' column with 2-letter uppercase state abbreviations for maps
         if 'State' in df.columns:
             df['code'] = df['State'].astype(str).str.upper().str[:2]
         return df
     except Exception:
-        # Fallback: Generate mock data if file is missing
-        return generate_mock_data()
+        pass # Continue to step 2
+
+    # 2. Try GitHub Raw URL (Based on your Repo)
+    # Ensure the file 'df_final.parquet' exists in your 'main' branch
+    try:
+        url = "https://github.com/RABIUL-ALAM-RATUL/Medicare-Hospital-Spending-by-Claim-USA-/raw/main/df_final.parquet"
+        df = pd.read_parquet(url)
+        if 'State' in df.columns:
+            df['code'] = df['State'].astype(str).str.upper().str[:2]
+        return df
+    except Exception:
+        pass # Continue to step 3
+
+    # 3. Fallback: Generate mock data
+    return generate_mock_data()
 
 # Load the dataframe into the variable 'df'
 df = load_data()
 
 # Check if we are using mock data (by checking row count or specific flag)
 if len(df) == 1000: # Mock data has exactly 1000 rows
-    st.warning("⚠️ **DEMO MODE:** 'df_final.parquet' not found. Displaying synthetic data for demonstration.")
+    st.warning("⚠️ **DEMO MODE:** 'df_final.parquet' could not be loaded from local path or GitHub. Displaying synthetic data.")
 
 # ———————————————————————— 5. HELPER FUNCTIONS ————————————————————————
 # Function to dynamically find column names in case they vary slightly
