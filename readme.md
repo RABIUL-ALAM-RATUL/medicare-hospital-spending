@@ -1,85 +1,117 @@
-Medicare Hospital Spending & Nursing Home Quality – USA (2025)
+Medicare Hospital Spending by Claim (USA)
 
-A Comprehensive National Analysis of 14,752 Certified Facilities | 96.1% Predictive Model Accuracy
+A National Analysis of 14,752 Certified Facilities | 96.1% Predictive Model Accuracy
 
 1. Research Abstract & Scope
 
-This dissertation project presents a rigorous, data-driven examination of the United States nursing home industry, utilising the most recent 2025 dataset from the Centers for Medicare & Medicaid Services (CMS). The study encompasses a complete national census of over 14,000 certified facilities, aiming to isolate the structural and systemic drivers of care quality.
+This project presents a detailed, data-based study of the nursing home industry in the United States, using the latest 2025 dataset from the Centers for Medicare & Medicaid Services (CMS). The research encompasses a comprehensive national census of over 14,000 certified facilities, aiming to identify the structural and systemic factors that impact care quality.
 
-The primary research objective extends beyond descriptive statistics to predictive modelling. By investigating the correlation between ownership structures (for-profit vs. non-profit), geographic location, and clinical outcomes, this analysis provides empirical evidence regarding the determinants of facility failure. The findings challenge the stochastic nature of care quality, demonstrating that outcomes are often structurally engineered and highly predictable.
+The main research goal goes beyond basic statistics to predictive modeling. In a time of increasing privatization in healthcare, this study examines the relationship between ownership types (for-profit versus non-profit), geographic location, and clinical outcomes. By applying machine learning techniques, this analysis provides evidence on what leads to facility failures. The results challenge the unpredictable nature of care quality, showing that outcomes can often be structured and predicted based on financial and operational incentives.
 
-2. Interactive Analytical Dashboard
+2. Interactive Analytical Dashboard (Methodological Output)
 
-As part of the methodological output, an interactive web application has been developed to allow peer review and granular exploration of the dataset.
+A key part of the output is an interactive web application developed with the Streamlit framework. This tool allows for peer review, detailed exploration of the dataset, and validation of findings through visualizations.
 
-Access the artifact here: https://medicare-hospital-spending-cardiffmet-st20316895.streamlit.app/
+Access the application: Launch Interactive Dashboard
 
-Key Capabilities:
+Key Analytical Features:
 
-Geospatial Analysis: Interactive choropleth maps visualising the spatial distribution of privatisation intensity alongside regional quality ratings, revealing distinct geographic corridors of systemic failure.
+- Geospatial Analysis: Interactive maps show the spread of privatization along with regional quality ratings, revealing specific geographic areas where regulatory oversight may be lacking.
+  
+- Detailed Market Exploration: A custom search engine enables in-depth analysis of individual facilities. Users can compare specific risk profiles, staffing ratios, and federal fines against state and national averages to better understand local performance.
 
-Granular Market Exploration: A search engine permitting forensic analysis of individual facilities, comparing specific risk profiles, staffing ratios, and federal fines against state and national benchmarks.
+- Causal Inference (SHAP): The dashboard uses SHAP (SHapley Additive exPlanations) values to explain the Random Forest model. This measures the contributions of factors like understaffing, past fines, and ownership type to a facility's classification as "Low Quality."
 
-Causal Inference (SHAP): Integration of SHAP (SHapley Additive exPlanations) values to interpret the Random Forest model, quantifying the precise contribution of factors such as understaffing and ownership type to a facility's "Low Quality" classification.
+- Data Extraction: Users can export filtered datasets or Tableau-compatible files, which support further independent research and ensure reproducibility.
 
-Data Extraction: Functionality to export filtered datasets or Tableau-optimised files for further independent research.
+3. Methodology & Analytical Framework
 
-3. Executive Summary of Findings
+This research uses a systematic data science process to ensure the reliability of the results.
 
-The analysis yielded significant empirical insights into the structural deficiencies of the sector:
+3.1 Data Preprocessing & Integrity
 
-Market Consolidation & Privatisation: The sector exhibits a high degree of privatisation, with 83% of U.S. nursing homes now operating under for-profit models.
+The raw CMS dataset has many variables and notable gaps. A careful cleaning process was applied:
 
-The "For-Profit Penalty": Ownership structure emerged as the principal determinant of care quality. The predictive model identified for-profit status as the primary driver pushing facilities into the 1–2 star (failing) category (SHAP importance coefficient = 0.42).
+- Imputation Strategy: Numerical variables that were right-skewed (like total fines) were adjusted using median imputation to maintain stability and reduce the effect of extreme outliers. Categorical variables used mode imputation.
 
-Geospatial Determinants: The study identified specific "Crisis Zones"—notably Texas, Florida, Louisiana, and Oklahoma—where high privatisation saturation correlates strongly with the lowest decile of national quality scores.
+- Outlier Management: To prevent the model from overfitting on extreme cases, Interquartile Range (IQR) capping was applied to financial penalty data, preserving the rank order of severity while normalizing variance.
 
-Predictive Validity: The developed Random Forest classifier achieved a predictive accuracy of 96.1% using only six structural features. This high efficacy suggests that facility failure is systemic and foreseeable rather than accidental.
+3.2 Feature Engineering
 
-4. Repository Architecture
+To identify underlying patterns in the data, several important predictors were developed:
 
-This repository contains the complete reproducible pipeline for the study:
+- Ownership_Risk_Score: A weighted categorical score based on the theoretical risks tied to profit motives (for-profit > government > non-profit).
 
-app.py: The production-ready source code for the Streamlit web application, including all visualisation logic and interactive components.
+- Chronic_Deficiency_Score: A combined measure of historical regulatory violations to highlight operational failures.
 
-Final_Draft_26_11_25.ipynb: The Jupyter Notebook documenting the end-to-end data science pipeline, including data cleaning (imputation/capping), Exploratory Data Analysis (EDA), Feature Engineering, and Machine Learning model training.
+- Fine_Per_Bed: A standardized financial measure that allows for equitable comparisons of penalty intensity across facilities of different sizes.
 
-df_final.parquet: The pre-processed, engineered, and compressed dataset utilised by the dashboard (generated via the notebook pipeline).
+3.3 Predictive Modeling
 
-requirements.txt: A comprehensive list of Python dependencies required to replicate the analysis environment.
+A Random Forest Classifier (with 600 trees) was trained to predict "Low Quality" facilities (those with 1–2 Star Ratings). The model reached an accuracy of 96.1% and an AUC-ROC of 0.987 on the test set, confirming that specific structural features mainly determine facility failure.
 
-5. Reproducibility & Execution
+4. Empirical Findings & Discussion
 
-To replicate this analysis or deploy the dashboard within a local environment, please adhere to the following protocol:
+The analysis provided valuable insights into the structural weaknesses of the sector, summarized as follows:
+
+4.1 Market Consolidation & Privatisation
+
+The industry has a high level of privatization, with 83% of U.S. nursing homes now run as for-profit entities. This consolidation has notably changed the care landscape, emphasizing efficiency metrics that often conflict with patient outcomes.
+
+4.2 The "For-Profit Penalty"
+
+Ownership structure was identified as the main factor influencing care quality. The predictive model showed that being for-profit is the leading reason facilities fall into the failing category. The SHAP analysis assigns an importance score of 0.42 to ownership type, far exceeding other aspects. This indicates a systemic "For-Profit Penalty," where the pursuit of profit relates to a decline in care standards.
+
+4.3 Geospatial Determinants
+
+The study pinpointed specific "Crisis Zones," particularly Texas, Florida, Louisiana, and Oklahoma. In these areas, a high concentration of for-profit ownership corresponds strongly with the lowest national quality scores. This pattern suggests that state-level regulations significantly affect the risks tied to privatization.
+
+5. Policy Implications
+
+Given the findings, this study suggests three structural changes:
+
+- Moratorium on Licensure: A freeze on new for-profit licenses in states exceeding 80% privatization until quality benchmarks are consistent with national averages.
+
+- Mandatory Staffing Ratios: Since understaffing was a major predictor of failure, federal minimums for nursing hours are warranted.
+
+- Value-Based Reimbursement: Medicare payments should be separated from occupancy rates and directly linked to clinical outcomes (Star Ratings) to align financial incentives with patient care.
+
+6. Repository Architecture
+
+This repository holds the complete, reproducible process for the study:
+
+- app.py: The source code for the Streamlit web application, including all visualization logic and interactive elements.
+
+- Medicare Hospital Spending by Claim (USA).ipynb: The Jupyter Notebook documenting the entire data science process, including data cleaning, exploratory analysis, feature engineering, and model training.
+
+- df_final.parquet: The pre-processed, engineered, and compressed dataset used by the dashboard (created through the notebook process).
+
+- requirements.txt: A full list of Python dependencies needed to replicate the analysis environment.
+
+7. Reproducibility & Execution
+
+To replicate this analysis or run the dashboard locally, follow these steps:
 
 Clone the Repository
 
-git clone [https://github.com/RABIUL-ALAM-RATUL/Medicare-Hospital-Spending-by-Claim-USA-.git](https://github.com/RABIUL-ALAM-RATUL/Medicare-Hospital-Spending-by-Claim-USA-.git)
+git clone [https://github.com/RABIUL-ALAM-RATUL/Medicare-Hospital-Spending-by-Claim-USA-.git](https://github.com/RABIUL-ALAM-RATUL/Medicare-Hospital-Spending-by-Claim-USA-.git)  
 cd Medicare-Hospital-Spending-by-Claim-USA-
-
-
 
 Environment Configuration
 
 pip install -r requirements.txt
 
-
-
 Execution
 
-To audit the analytical pipeline:
+To review the analytical process:
 
-jupyter notebook Medicare Hospital Spending by Claim (USA).ipynb
+Jupyter Notebook "Medicare Hospital Spending by Claim (USA).ipynb"
 
-
-
-To launch the interactive dashboard:
+To start the interactive dashboard:
 
 streamlit run app.py
 
-
-
 Principal Investigator
 
-Md Rabiul Alam
+Md Rabiul Alam  
 Medicare Hospital Spending by Claim (USA)
