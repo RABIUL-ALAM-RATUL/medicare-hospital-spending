@@ -215,10 +215,7 @@ if page == "1. Dashboard (Overview)":
     # Context for Maps
     st.markdown("""
     <div class="narrative-box">
-    <b>Geospatial Context:</b> The interplay between ownership structure and care quality is not uniform across the United States. 
-    By visualizing these metrics side-by-side, we can identify regional "hotspots" where high rates of privatization coincide with lower quality ratings. 
-    Historically, the southern and southeastern United States have adopted more deregulated approaches to nursing home ownership, inviting large for-profit chains. 
-    Conversely, the Northeast often maintains stricter non-profit or government-run models. These maps serve as the foundational evidence for the regional disparities discussed throughout this analysis.
+    <b>Geospatial Context:</b> The relationship between ownership structure and care quality varies across the United States. By comparing these metrics, we can find regional "hotspots" where high levels of privatization match with lower quality ratings. Historically, the southern and southeastern United States have taken more relaxed approaches to nursing home ownership, allowing large for-profit chains to operate. In contrast, the Northeast often sticks to stricter non-profit or government-run models. These maps provide the basic evidence for the regional differences covered in this analysis.
     </div>
     """, unsafe_allow_html=True)
     
@@ -245,7 +242,7 @@ if page == "1. Dashboard (Overview)":
     # Findings
     st.markdown("""
     <div class="finding-box">
-    <b>Key Finding:</b> There is a visible inverse correlation between the two maps. States with the deepest red saturation in the 'Privatization' map (such as Texas, Louisiana, and Florida) frequently appear as lighter or orange tones in the 'Quality' map. This suggests that regions with aggressive privatization policies tend to struggle more with maintaining high average CMS star ratings.
+    <b>Key Finding:</b> There is a clear opposite relationship between the two maps. States that show the darkest red in the 'Privatization' map, like Texas, Louisiana, and Florida, often show up in lighter or orange shades in the 'Quality' map. This indicates that areas with strong privatization policies often have a harder time keeping high average CMS star ratings.
     </div>
     """, unsafe_allow_html=True)
 
@@ -262,9 +259,7 @@ elif page == "2. Data Preprocessing":
     with t1:
         st.markdown("""
         <div class="narrative-box">
-        <b>Data Integrity Strategy:</b> Real-world administrative data is rarely perfect. Missing values can arise from clerical errors, non-reporting, or facility closures. 
-        Before analysis, we must diagnose the "sparsity" of the dataset. The matrix below visualizes missing data patterns. 
-        White lines represent missing values. Understanding these patterns allows us to choose the correct imputation strategy—median imputation for skewed financial data, and mode imputation for categorical labels—ensuring we preserve the statistical integrity of the dataset without discarding valuable rows.
+        <b>Data Integrity Strategy:</b>Real-world administrative data is rarely perfect. Missing values can come from clerical errors, non-reporting, or facility closures. Before analysis, we need to check the "sparsity" of the dataset. The matrix below shows the patterns of missing data. White lines represent missing values. Understanding these patterns helps us select the right imputation strategy, using median imputation for skewed financial data and mode imputation for categorical labels. This approach ensures we maintain the statistical integrity of the dataset without losing valuable rows.
         </div>
         """, unsafe_allow_html=True)
         
