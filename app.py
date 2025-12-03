@@ -1,4 +1,3 @@
-# app.py -> ULTIMATE WEB APPLICATION (Academic Assessment Standard)
 # Project: Medicare Hospital Spending by Claim (USA)
 # Created by: Md Rabiul Alam
 
@@ -162,31 +161,17 @@ with st.sidebar:
         "2. Data Preprocessing",
         "3. Exploratory Data Analysis (EDA)",
         "4. Predictive Modelling",
-        "5. Narrative of the Analytics"
+        "5. Narrative of the Analytics",
+        "6. Market & Facility Explorer"
     ])
     
     st.markdown("---") # Divider
     
     # Export Options
-    st.markdown("### Data Export")
-    
-    # Standard CSV
-    csv_data = df.to_csv(index=False).encode('utf-8')
-    st.download_button(
-        label="Download Dataset (CSV)",
-        data=csv_data,
-        file_name="medicare_data.csv",
-        mime="text/csv"
-    )
-    
-    # Tableau Ready
-    st.download_button(
-        label="Download for Tableau (.csv)",
-        data=csv_data,
-        file_name="medicare_tableau.csv",
-        mime="text/csv",
-        help="Use this file to connect directly in Tableau Public/Desktop"
-    )
+    with st.expander("📥 Export Data"):
+        csv_data = df.to_csv(index=False).encode('utf-8')
+        st.download_button("Download CSV", csv_data, "medicare_data.csv", "text/csv")
+        st.info("To export figures for Tableau: Download the CSV above.")
 
 # ------------------------------------------------------------------------------
 # PAGE 1: DASHBOARD (OVERVIEW)
@@ -201,11 +186,11 @@ if page == "1. Dashboard (Overview)":
     
     if 'Ownership_Risk_Score' in df.columns:
         fp_share = (df['Ownership_Risk_Score'] == 3).mean()
-        c2.metric("For-Profit Dominance", f"{fp_share:.1%}") # KPI 2
+        c2.metric("For-Profit Dominance", f"{fp_share:.1%}", delta_color="inverse") # KPI 2
         
     if 'Low_Quality_Facility' in df.columns:
         fail_share = df['Low_Quality_Facility'].mean()
-        c3.metric("Failure Rate (1-2 Stars)", f"{fail_share:.1%}") # KPI 3
+        c3.metric("Failure Rate (1-2 Stars)", f"{fail_share:.1%}", delta_color="inverse") # KPI 3
         
     if fines_col:
         avg_fine = df[fines_col].mean()
@@ -228,7 +213,7 @@ if page == "1. Dashboard (Overview)":
             fig = px.choropleth(grp, locations='code', locationmode='USA-states', color='Val',
                                 color_continuous_scale='Reds', range_color=(0,100), scope="usa",
                                 title="Percentage of For-Profit Homes")
-            st.plotly_chart(fig) # Render Map 1
+            st.plotly_chart(fig, use_container_width=True) # Render Map 1
             st.markdown("<div class='insight-text'>Key Finding: Southern states show significantly higher concentrations of for-profit ownership.</div>", unsafe_allow_html=True)
             
     with m2:
@@ -239,7 +224,7 @@ if page == "1. Dashboard (Overview)":
             fig = px.choropleth(grp, locations='code', locationmode='USA-states', color='Val',
                                 color_continuous_scale='RdYlGn', range_color=(1,5), scope="usa",
                                 title="Average Star Rating")
-            st.plotly_chart(fig) # Render Map 2
+            st.plotly_chart(fig, use_container_width=True) # Render Map 2
             st.markdown("<div class='insight-text'>Key Finding: Quality ratings often inversely correlate with high-privatization zones.</div>", unsafe_allow_html=True)
 
 # ------------------------------------------------------------------------------
@@ -276,7 +261,7 @@ elif page == "2. Data Preprocessing":
         if fines_col:
             fig = px.box(df, y=fines_col, points="outliers", title="Fines Distribution (Outliers Highlighted)",
                          color_discrete_sequence=[CP['secondary']])
-            st.plotly_chart(fig)
+            st.plotly_chart(fig, use_container_width=True)
             st.markdown("<div class='insight-text'>Finding: Fines are heavily right-skewed, with a few facilities receiving massive penalties.</div>", unsafe_allow_html=True)
             
     # Tab 3: Scaling
@@ -291,7 +276,7 @@ elif page == "2. Data Preprocessing":
             fig.add_trace(go.Histogram(x=raw, name='Original Data', opacity=0.6))
             fig.add_trace(go.Histogram(x=scaled, name='Standard Scaled', visible='legendonly', opacity=0.6))
             fig.update_layout(barmode='overlay', title="Distribution Transformation")
-            st.plotly_chart(fig)
+            st.plotly_chart(fig, use_container_width=True)
             
     # Tab 4: Feature Engineering
     with t4:
@@ -302,7 +287,7 @@ elif page == "2. Data Preprocessing":
         vals = [0.45, 0.35, 0.20]
         fig = px.bar(x=vals, y=feats, orientation='h', title="Impact of Engineered Features",
                      color=vals, color_continuous_scale='Oranges')
-        st.plotly_chart(fig)
+        st.plotly_chart(fig, use_container_width=True)
 
 # ------------------------------------------------------------------------------
 # PAGE 3: EXPLORATORY DATA ANALYSIS (EDA)
@@ -317,7 +302,7 @@ elif page == "3. Exploratory Data Analysis (EDA)":
     if rating_col:
         fig = px.histogram(df, x=rating_col, color=rating_col, title="Distribution of Overall Ratings",
                            color_discrete_sequence=px.colors.sequential.RdBu)
-        st.plotly_chart(fig)
+        st.plotly_chart(fig, use_container_width=True)
         st.markdown("<div class='insight-text'>Insight: The distribution is not normal; there is a polarization between very high and very low performing facilities.</div>", unsafe_allow_html=True)
         
     # 2. Ownership vs Quality
@@ -327,7 +312,7 @@ elif page == "3. Exploratory Data Analysis (EDA)":
         fig = px.box(df, x='Ownership Type', y=rating_col, color='Ownership Type',
                      color_discrete_sequence=[CP['primary'], CP['secondary'], CP['success']],
                      title="The For-Profit Performance Gap")
-        st.plotly_chart(fig)
+        st.plotly_chart(fig, use_container_width=True)
         st.markdown("<div class='insight-text'>Insight: For-profit facilities consistently show a lower median star rating compared to non-profit and government entities.</div>", unsafe_allow_html=True)
         
     # 3. State Rankings
@@ -341,12 +326,12 @@ elif page == "3. Exploratory Data Analysis (EDA)":
             top = ranks.tail(10)
             fig = px.bar(x=top.values, y=top.index, orientation='h', title="Top 10 States",
                          color_discrete_sequence=[CP['success']])
-            st.plotly_chart(fig)
+            st.plotly_chart(fig, use_container_width=True)
         with c2:
             bot = ranks.head(10)
             fig = px.bar(x=bot.values, y=bot.index, orientation='h', title="Bottom 10 States",
                          color_discrete_sequence=[CP['secondary']])
-            st.plotly_chart(fig)
+            st.plotly_chart(fig, use_container_width=True)
         st.markdown("<div class='insight-text'>Insight: Geographic location is a strong predictor of care quality, likely due to state-level regulatory variances.</div>", unsafe_allow_html=True)
             
     # 4. Fines vs Quality
@@ -355,7 +340,7 @@ elif page == "3. Exploratory Data Analysis (EDA)":
     if fines_col and rating_col:
         fig = px.scatter(df.sample(min(2000, len(df))), x=fines_col, y=rating_col, log_x=True,
                          color='Ownership Type', title="Higher Fines Correlation with Low Quality")
-        st.plotly_chart(fig)
+        st.plotly_chart(fig, use_container_width=True)
         st.markdown("<div class='insight-text'>Insight: There is a clear negative correlation; facilities with higher fines tend to have lower star ratings.</div>", unsafe_allow_html=True)
 
 # ------------------------------------------------------------------------------
@@ -382,7 +367,7 @@ elif page == "4. Predictive Modelling":
 
         with st.spinner("Training Model & Calculating SHAP..."):
             model, X, feats = build_model(df)
-            
+        
         if model:
             # SHAP Bar Chart
             st.subheader("Global Feature Importance (SHAP)")
@@ -397,22 +382,21 @@ elif page == "4. Predictive Modelling":
             else:
                 vals = np.abs(shap_values).mean(0)
             
-            # FIX: Ensure array is 1D and lengths match perfectly
-            if vals.ndim > 1:
-                vals = vals.flatten()
-                
-            # Truncate to matching length to prevent ValueError
+            # FIX 1: Ensure array is 1D
+            if vals.ndim > 1: vals = vals.flatten()
+
+            # FIX 2: Ensure feature names and values have same length before plotting
             min_len = min(len(feats), len(vals))
             plot_feats = feats[:min_len]
             plot_vals = vals[:min_len]
-            
+                
             # Create DataFrame for plotting
             imp_df = pd.DataFrame({'Feature': plot_feats, 'Importance': plot_vals})
             imp_df = imp_df.sort_values('Importance')
             
             fig = px.bar(imp_df, x='Importance', y='Feature', orientation='h', title="Top Drivers of Prediction",
-                         color='Importance', color_continuous_scale='Oranges')
-            st.plotly_chart(fig, width="stretch") # Using 'stretch' via kwarg if supported, or rely on default
+                         labels={'x':'Impact', 'y':'Feature'}, color='Importance', color_continuous_scale='Oranges')
+            st.plotly_chart(fig, use_container_width=True)
             st.markdown("<div class='insight-text'>Insight: Ownership Structure and Chronic Deficiencies are the top predictors, confirming the structural nature of the quality crisis.</div>", unsafe_allow_html=True)
             
             # Waterfall Chart
@@ -435,7 +419,7 @@ elif page == "4. Predictive Modelling":
                 connector={"line":{"color":"rgb(63, 63, 63)"}}
             ))
             fig.update_layout(title="Risk Build-up for Single Facility")
-            st.plotly_chart(fig)
+            st.plotly_chart(fig, use_container_width=True)
     else:
         st.warning("ML libraries not installed.")
 
@@ -455,7 +439,7 @@ elif page == "5. Narrative of the Analytics":
             grp = df.groupby('code')['Ownership_Risk_Score'].apply(lambda x: (x==3).mean()*100).reset_index(name='Val')
             fig = px.choropleth(grp, locations='code', locationmode='USA-states', color='Val',
                                 color_continuous_scale='Reds', scope="usa", title="For-Profit Dominance Map")
-            st.plotly_chart(fig)
+            st.plotly_chart(fig, use_container_width=True)
             st.markdown("<div class='insight-text'>Observation: The map is predominantly red, showing high saturation of for-profit ownership across most states.</div>", unsafe_allow_html=True)
             
     with acts[1]:
@@ -463,7 +447,7 @@ elif page == "5. Narrative of the Analytics":
         st.markdown("As profits rose, ratings fell. The correlation is structural.")
         if rating_col:
             fig = px.box(df, x='Ownership Type', y=rating_col, color='Ownership Type')
-            st.plotly_chart(fig)
+            st.plotly_chart(fig, use_container_width=True)
             st.markdown("<div class='insight-text'>Observation: Non-profits maintain higher median ratings, while for-profits show a wider spread with a lower median.</div>", unsafe_allow_html=True)
             
     with acts[2]:
@@ -478,7 +462,7 @@ elif page == "5. Narrative of the Analytics":
             worst = df[df['Low_Quality_Facility']==1].groupby('code').size().sort_values(ascending=False).head(10)
             fig = px.bar(x=worst.values, y=worst.index, orientation='h', title="States with Most Failing Homes",
                          color_discrete_sequence=[CP['secondary']])
-            st.plotly_chart(fig)
+            st.plotly_chart(fig, use_container_width=True)
             
     with acts[4]:
         st.header("The Call to Action")
@@ -487,6 +471,84 @@ elif page == "5. Narrative of the Analytics":
         2. **Mandate** minimum staffing ratios.
         3. **Link** payments to clinical outcomes, not occupancy.
         """)
+
+# ------------------------------------------------------------------------------
+# PAGE 6: MARKET EXPLORER (ADDED VALUE MODULE)
+# ------------------------------------------------------------------------------
+elif page == "6. Market & Facility Explorer":
+    st.title("📍 Market & Facility Explorer") # Page Title
+    st.markdown("Compare a facility against State and National averages.")
+    
+    # Filters layout
+    c1, c2, c3 = st.columns(3)
+    
+    with c1:
+        # State Selector
+        states = ["All"] + sorted(df['State'].unique().tolist())
+        sel_state = st.selectbox("Select State", states)
+        
+    with c2:
+        # City Selector (Cascading)
+        if sel_state != "All":
+            cities = ["All"] + sorted(df[df['State'] == sel_state][city_col].unique().tolist())
+        else:
+            cities = ["All"] # Restrict to save visual space until state selected
+        sel_city = st.selectbox("Select City", cities)
+        
+    with c3:
+        # Facility Selector (Cascading)
+        if sel_state != "All" and sel_city != "All":
+            facilities = df[(df['State'] == sel_state) & (df[city_col] == sel_city)][name_col].unique().tolist()
+            sel_fac = st.selectbox("Select Facility", ["None"] + sorted(facilities))
+        else:
+            sel_fac = st.selectbox("Select Facility", ["Select City First"])
+            
+    st.markdown("---") # Divider
+    
+    # 1. Filtered Dataframe View (If no specific facility selected)
+    if sel_fac == "None" or sel_fac == "Select City First":
+        dff = df.copy()
+        if sel_state != "All": dff = dff[dff['State'] == sel_state]
+        if sel_city != "All": dff = dff[dff[city_col] == sel_city]
+        
+        st.subheader(f"Facilities List ({len(dff)})")
+        st.dataframe(dff[[name_col, city_col, 'State', rating_col, owner_col]], width=None) # FIXED: Removed deprecated arg
+        
+    # 2. Detailed Comparison View (If facility selected)
+    else:
+        st.subheader(f"🏥 Analysis: {sel_fac}")
+        
+        # Get target data
+        target = df[df[name_col] == sel_fac].iloc[0]
+        
+        # Create Comparison Table
+        comp_data = {
+            "Metric": ["Overall Rating", "Fines ($)", "Staffing Hours"],
+            "This Facility": [
+                f"{target[rating_col]} ⭐", 
+                f"${target[fines_col]:,.0f}" if fines_col else "N/A",
+                f"{target[staff_col]:.2f}" if staff_col else "N/A"
+            ],
+            "State Avg": [
+                f"{df[df['State']==sel_state][rating_col].mean():.1f} ⭐",
+                f"${df[df['State']==sel_state][fines_col].mean():,.0f}" if fines_col else "N/A",
+                f"{df[df['State']==sel_state][staff_col].mean():.2f}" if staff_col else "N/A"
+            ],
+            "National Avg": [
+                f"{df[rating_col].mean():.1f} ⭐",
+                f"${df[fines_col].mean():,.0f}" if fines_col else "N/A",
+                f"{df[staff_col].mean():.2f}" if staff_col else "N/A"
+            ]
+        }
+        
+        # Display comparison
+        st.table(pd.DataFrame(comp_data))
+        
+        # Status Badge
+        if target['Low_Quality_Facility'] == 1:
+            st.error("⚠️ This facility is flagged as **High Risk** (Low Quality).")
+        else:
+            st.success("✅ This facility meets acceptable quality standards.")
 
 # ------------------------------------------------------------------------------
 # FOOTER
