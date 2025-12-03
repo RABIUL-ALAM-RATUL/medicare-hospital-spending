@@ -68,23 +68,55 @@ COLOR_PALETTE = {
 }
 
 # ———————————————————————— 4. DATA LOADING & CACHING ————————————————————————
+
+# Function to generate synthetic data if the real file is missing
+def generate_mock_data():
+    """Generates a realistic dummy dataset for demonstration purposes."""
+    np.random.seed(42)
+    n_rows = 1000
+    states = ['TX', 'CA', 'FL', 'NY', 'PA', 'OH', 'IL', 'LA', 'OK', 'IN']
+    ownership_types = ['For profit', 'Non profit', 'Government']
+    
+    data = {
+        'Provider Name': [f'Facility {i}' for i in range(n_rows)],
+        'City': np.random.choice(['Houston', 'Los Angeles', 'Miami', 'New York', 'Chicago'], n_rows),
+        'State': np.random.choice(states, n_rows),
+        'Overall Rating': np.random.randint(1, 6, n_rows),
+        'Ownership Type': np.random.choice(ownership_types, n_rows, p=[0.7, 0.2, 0.1]),
+        'Total Amount of Fines in Dollars': np.random.exponential(10000, n_rows),
+        'Total_Staffing_Hours': np.random.normal(3.5, 0.5, n_rows),
+        'Ownership_Risk_Score': np.random.choice([1, 2, 3], n_rows, p=[0.2, 0.1, 0.7]),
+        'Low_Quality_Facility': np.random.choice([0, 1], n_rows, p=[0.7, 0.3]),
+        'Chronic_Deficiency_Score': np.random.poisson(2, n_rows),
+        'Fine_Per_Bed': np.random.exponential(50, n_rows),
+        'Understaffed': np.random.choice([0, 1], n_rows),
+        'High_Risk_State': np.random.choice([0, 1], n_rows),
+        'State_Quality_Percentile': np.random.uniform(0, 1, n_rows)
+    }
+    df = pd.DataFrame(data)
+    df['code'] = df['State'] # Already 2-letter codes
+    return df
+
 # Decorator to cache the data loading function so it only runs once (improves performance)
 @st.cache_data
 def load_data():
     try:
         # Reads the cleaned dataset from the Parquet file (highly efficient)
         df = pd.read_parquet("df_final.parquet")
+        # Creates a 'code' column with 2-letter uppercase state abbreviations for maps
+        if 'State' in df.columns:
+            df['code'] = df['State'].astype(str).str.upper().str[:2]
+        return df
     except Exception:
-        # Fallback for error handling
-        return pd.DataFrame()
-        
-    # Creates a 'code' column with 2-letter uppercase state abbreviations for maps
-    if 'State' in df.columns:
-        df['code'] = df['State'].astype(str).str.upper().str[:2]
-    return df  # Returns the loaded dataframe
+        # Fallback: Generate mock data if file is missing
+        return generate_mock_data()
 
 # Load the dataframe into the variable 'df'
 df = load_data()
+
+# Check if we are using mock data (by checking row count or specific flag)
+if len(df) == 1000: # Mock data has exactly 1000 rows
+    st.warning("⚠️ **DEMO MODE:** 'df_final.parquet' not found. Displaying synthetic data for demonstration.")
 
 # ———————————————————————— 5. HELPER FUNCTIONS ————————————————————————
 # Function to dynamically find column names in case they vary slightly
@@ -194,7 +226,7 @@ elif page == "2. Data Cleaning Pipeline":
     with c1:
         st.markdown("**Missing Data Matrix**")
         fig, ax = plt.subplots(figsize=(8, 5))
-        msno.matrix(df_viz.sample(500), ax=ax, sparkline=False, fontsize=8, color=(0.2, 0.4, 0.6))
+        msno.matrix(df_viz.sample(min(500, len(df_viz))), ax=ax, sparkline=False, fontsize=8, color=(0.2, 0.4, 0.6))
         st.pyplot(fig)
     with c2:
         st.markdown("**Correlation Heatmap**")
@@ -252,7 +284,7 @@ elif page == "3. EDA Deep Dive":
     # Row 2: Scatter Plots
     st.markdown("### Correlations: Money & Staffing")
     if 'Total Amount of Fines in Dollars' in df.columns and rating_col:
-        fig = px.scatter(df.sample(1000), x='Total Amount of Fines in Dollars', y=rating_col,
+        fig = px.scatter(df.sample(min(1000, len(df))), x='Total Amount of Fines in Dollars', y=rating_col,
                          log_x=True, color='Ownership Type', title="Fines vs Quality (Log Scale)",
                          hover_name=name_col)
         st.plotly_chart(fig, use_container_width=True)
